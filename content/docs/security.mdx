@@ -1,0 +1,60 @@
+---
+title: Security
+description: How PyGate protects your integration and your data.
+---
+
+
+# Security
+
+This page summarizes the security posture of PyGate. For the long-form, audit-ready document, request the Security Pack from `security@pygate.local`.
+
+## Encryption
+
+- **In transit** — TLS 1.3 only. The dashboard, the API, and the checkout page all force HTTPS. HTTP requests are 301'd to HTTPS.
+- **At rest** — Postgres encrypted at the volume level (LUKS / cloud KMS). R2 / S3 buckets use SSE-S3. Webhook payloads are encrypted with the application key before being persisted.
+
+## Authentication
+
+- **Dashboard** — Better Auth with email+password (bcrypt) and OAuth (GitHub, Google). Sessions are JWTs signed with HS256 and rotated every 15 minutes.
+- **Public API** — Single header: `x-api-key: pgk_…`. Keys are random 256-bit values, prefixed with the environment mode (`test_` / `live_`) for at-a-glance identification.
+- **Internal BFF** — Bearer token, server-to-server only. Stored in `BACKEND_API_TOKENS` (CSV) and rotated by appending the new value, deploying, then removing the old one.
+- **Webhook signing** — HMAC-SHA256, replay-protected with a timestamp, verified by the merchant.
+
+## Authorization
+
+- **Project-scoped API keys** — every key is bound to a single project. There is no workspace-wide key.
+- **Team-scoped dashboard** — Better Auth supports `owner`, `admin`, `member`, `viewer` roles per project. Read [Role-based access](#role-based-access) below.
+- **Customer-facing checkout** — anonymous; no customer accounts.
+
+## Application security
+
+- **Dependencies** — Dependabot runs nightly. Critical patches are auto-merged. `npm audit` is part of CI.
+- **Static analysis** — ESLint with security-focused rules; `npm run lint` blocks builds on warnings.
+- **Penetration testing** — Annual third-party pentest; report excerpts available under NDA.
+- **Bug bounty** — Private program via HackerOne. Email `security@pygate.local` for an invite.
+
+## Operational
+
+- **Audit log** — Every dashboard action is logged with the actor, timestamp, IP, and request ID. Visible to project owners.
+- **Backups** — Daily Postgres snapshot, retained 30 days. R2 objects replicated across regions.
+- **Disaster recovery** — RPO 24 hours, RTO 4 hours. Documented in the Security Pack.
+- **On-call** — 24/7 rotation for sev-1 incidents. Status at [status.pygate.example.com](https://status.pygate.example.com).
+
+## Role-based access
+
+| Role | Create projects | Manage API keys | Manage webhooks | View data | Receive payouts |
+|---|---|---|---|---|---|
+| Owner | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Admin | ✓ | ✓ | ✓ | ✓ | — |
+| Member | — | ✓ | ✓ | ✓ | — |
+| Viewer | — | — | — | ✓ | — |
+
+There is no built-in "billing-only" role. Use `viewer` and grant API access to finance staff via the API key, not the dashboard.
+
+## Reporting a vulnerability
+
+Email `security@pygate.local` with a description and a proof-of-concept. PGP key is on the security page of the dashboard. We respond within 24 hours and credit reporters in the Security Pack (with permission).
+
+<Callout type="warn">
+  Please do not file vulnerability reports as GitHub issues. Email is the only way to ensure they're triaged by the security team.
+</Callout>

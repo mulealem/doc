@@ -1,0 +1,66 @@
+---
+title: Retries & DLQ
+description: What PyGate does when your endpoint fails to respond.
+---
+
+
+# Retries and dead-letter queue
+
+PyGate uses a durable queue for webhook delivery. Every delivery is a row in the `WebhookDelivery` table, and the state of that row is the source of truth.
+
+## Retry policy
+
+When your endpoint returns a non-2xx response (or times out), PyGate applies this schedule:
+
+| Attempt | Wait before next attempt |
+|---|---|
+| 1 | (immediate) |
+| 2 | 30 seconds |
+| 3 | 2 minutes |
+| 4 | 10 minutes |
+| 5 | 30 minutes |
+| 6 | 2 hours |
+| 7 | 6 hours |
+| 8 | 24 hours |
+
+After 8 attempts the delivery is marked **FAILED** and dead-lettered. The maximum is 8 attempts per delivery; you can re-enqueue from the dashboard.
+
+The schedule is exponential with jitter — the actual wait may be ±20% of the listed value.
+
+## What does and doesn't retry
+
+| Status | Retried? |
+|---|---|
+| `200`, `201`, `202`, `204` | No — success |
+| Any other 2xx | No — success |
+| `3xx` | No — success (PyGate does not follow redirects on webhooks) |
+| `400` | No — your endpoint is misconfigured |
+| `401`, `403` | No — auth issue, fix your endpoint |
+| `404` | No — your endpoint is unreachable |
+| `408`, `429` | Yes — temporary |
+| Any other `4xx` | No — your endpoint is rejecting the payload |
+| `5xx` | Yes — your server is having a problem |
+| Connection error / timeout | Yes — transient |
+
+## Time budget
+
+Each attempt has a **10-second timeout**. If your endpoint doesn't respond within 10 seconds, the attempt is treated as a `5xx` and retried.
+
+This is a hard cap. If your endpoint needs more than 10 seconds, ACK fast with a `202 Accepted` and process the event in a background worker.
+
+## Dead-letter queue
+
+When a delivery hits `maxAttempts` (default 8), it's marked `FAILED` and pushes into the dead-letter queue. From the dashboard:
+
+- **Webhooks → Failed** lists every dead-lettered delivery, with the last error and response body.
+- **Re-enqueue** resets the delivery to `PENDING` with `attempt: 0`. The queue worker picks it up on the next pass.
+- **Replay** creates a brand-new delivery with the same payload (and a fresh `x-pygate-delivery-id`). Useful when you've fixed the underlying issue and want a clean run.
+
+## Re-enqueue vs replay
+
+| Action | Use when |
+|---|---|
+| Re-enqueue | The original delivery failed for a temporary reason (your server was down, you redeployed) and you want the same delivery to try again. |
+| Replay | You want a fresh delivery — useful for fans-out to multiple endpoints, or when you've changed the payload shape. |
+
+Most of the time, **re-enqueue** is what you want.

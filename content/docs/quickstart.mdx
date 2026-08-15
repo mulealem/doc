@@ -1,0 +1,110 @@
+---
+title: Quickstart
+description: Create a project, get an API key, and accept your first test payment in under five minutes.
+---
+
+
+# Quickstart
+
+This walkthrough will take you from zero to a verified test payment. It assumes you have a [PyGate dashboard](https://dashboard.example.com) account; if you don't, [sign up](https://dashboard.example.com/signup) first.
+
+<Callout type="info">
+  All examples in this guide use PyGate's **test mode**. You'll be working with a sandbox project, fake bank accounts, and no real money moves. See [Test mode](/guides/test-mode) for the fixtures.
+</Callout>
+
+## 1. Create a project
+
+Every PyGate integration lives inside a **project**. A project has a name, an API key, a set of bank accounts customers can pay into, and one or more webhook subscriptions.
+
+1. Sign in at [dashboard.example.com](https://dashboard.example.com).
+2. Click **New project**, give it a name (`"Acme Store"`), and pick **Test mode**.
+3. Open the project and copy the **API key** — it starts with `pgk_test_`. Treat it like a password.
+
+## 2. Add a bank account
+
+Your customers will pay into one of your bank accounts. PyGate needs to know which.
+
+1. Inside the project, go to **Bank accounts** → **Add bank account**.
+2. Enter the account details. In test mode, the account number is ignored — PyGate accepts any well-formed number.
+3. Mark the account as **Enabled**. The dashboard will refuse to create orders if no account is enabled.
+
+## 3. Create an order
+
+From your terminal:
+
+```bash
+curl -X POST https://dashboard.example.com/api/v1/orders \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+  -H "content-type: application/json" \
+  -d '{
+    "amount": 250,
+    "description": "Test order",
+    "currency": "ETB"
+  }'
+```
+
+You'll get back a JSON response with a `paymentUrl`:
+
+```json
+{
+  "orderId": "ord_3x4mpl3t3st0rd3r1d2",
+  "paymentUrl": "https://checkout.example.com/pay/ord_3x4mpl3t3st0rd3r1d2",
+  "expiresInSeconds": 600,
+  "expiresAt": "2026-08-13T15:30:00.000Z",
+  "amount": 250,
+  "amountMinor": 25000,
+  "currency": "ETB",
+  "description": "Test order"
+}
+```
+
+<Callout type="info">
+  The `paymentUrl` is hosted on a separate origin (`checkout.example.com`). In dev, point it to `http://localhost:3002/pay/…`. See [Hosted checkout](/checkout/hosted-page).
+</Callout>
+
+## 4. Open the payment page
+
+Open `paymentUrl` in a browser. In test mode the page will simulate a customer paying; pick one of the [test fixtures](/guides/test-mode) and click **Upload receipt**.
+
+## 5. Receive a webhook
+
+A few seconds after the receipt is uploaded, PyGate will verify the receipt against the issuing bank. If the verification succeeds, it will deliver a `payment.approved` event to any webhook subscribed to that event.
+
+You can also poll the order directly:
+
+```bash
+curl https://dashboard.example.com/api/v1/orders/ord_3x4mpl3t3st0rd3r1d2 \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+```
+
+When the status flips to `PAID`, the payment is in:
+
+```json
+{
+  "orderId": "ord_3x4mpl3t3st0rd3r1d2",
+  "status": "PAID",
+  "amount": 250,
+  "currency": "ETB",
+  "description": "Test order",
+  "expiresAt": "2026-08-13T15:30:00.000Z",
+  "payment": {
+    "status": "APPROVED",
+    "submittedAt": "2026-08-13T15:25:12.000Z",
+    "approvedAt": "2026-08-13T15:26:48.000Z",
+    "extractedData": {
+      "amount": 250,
+      "currency": "ETB",
+      "payerName": "Abel Tadesse",
+      "payerAccount": "1000123456789",
+      "receiverName": "Demo Merchant",
+      "referenceId": "TXN9X9K7M"
+    }
+  }
+}
+```
+
+## 6. Next steps
+
+- Read [How it works](/concepts/how-it-works) for the full lifecycle.
+- Stand up [webhooks](/webhooks/overview) so you don't have to poll.
+- When you're ready to take real money, walk through the [Go-live checklist](/guides/go-live-checklist).

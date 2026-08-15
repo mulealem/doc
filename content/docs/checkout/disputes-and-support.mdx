@@ -1,0 +1,43 @@
+---
+title: Disputes & support
+description: How to let a customer dispute a payment or open a support ticket from the checkout page.
+---
+
+
+# Disputes and support
+
+Two escape hatches are available on the hosted checkout page:
+
+## Disputes
+
+If a customer's payment was rejected (e.g. the OCR misread the amount, or the receipt photo was blurry), they can open a **dispute** from the checkout page. This creates a `Claim` row in PyGate and notifies you.
+
+Disputes are visible in the dashboard under **Project → Disputes**. From there you can:
+
+- View the receipt and the OCR output
+- Manually approve (which re-runs the verification) or reject
+- Reply to the customer (their email is captured)
+- Mark as resolved
+
+When a dispute is resolved, a `dispute.resolved` webhook is delivered (if you're subscribed to that event).
+
+## Support tickets
+
+For anything that isn't a payment dispute, the customer can open a **support ticket** from the checkout page footer. This creates a `SupportTicket` row and emails your team's support inbox (configured in Project → Settings).
+
+Tickets are not tied to a specific order or payment — they're a generic contact channel. You can reply by email or close them from the dashboard.
+
+## Programmatic access
+
+Today, disputes and support tickets are dashboard-only. A read-only API:
+
+```
+GET /api/v1/disputes
+GET /api/v1/support-tickets
+```
+
+is in the roadmap for v1.5. Until then, if you need to integrate disputes into your own internal tooling, use the [webhooks](/webhooks/events) (`order.disputed`, `dispute.resolved`).
+
+<Callout type="info">
+  The customer's email is the only piece of PII the checkout page collects. It's not stored beyond the dispute/ticket lifetime unless you've explicitly enabled customer history in the dashboard.
+</Callout>

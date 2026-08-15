@@ -1,0 +1,70 @@
+---
+title: Hosted checkout page
+description: What the customer sees at /pay/[orderId] and how to redirect them there.
+---
+
+
+# Hosted checkout page
+
+The hosted checkout page is the surface your customer actually sees. It lives on a separate origin (`checkout.example.com`) from your dashboard and your app, and is fully managed by PyGate.
+
+## Flow
+
+```
+customer clicks "Pay" on your site
+  → you POST /api/v1/orders
+  → you receive { paymentUrl, ... }
+  → you redirect customer to paymentUrl
+  → customer sees hosted page
+  → customer picks bank / telebirr
+  → customer pays from their bank app
+  → customer returns to hosted page
+  → customer uploads a screenshot of the receipt
+  → hosted page polls for verification
+  → on success: redirect to your successUrl
+  → on failure: redirect to your cancelUrl
+```
+
+## URL
+
+```
+https://checkout.example.com/pay/{orderId}
+```
+
+The `orderId` is the `orderId` returned by `POST /api/v1/orders`. Don't construct the URL yourself — use the `paymentUrl` field verbatim.
+
+## Customizing the page
+
+By default, the page shows:
+
+- Your project logo (uploaded in the dashboard)
+- The order description and amount
+- A list of enabled bank accounts the customer can pay into
+- A receipt upload widget after the customer pays
+
+You can customize:
+
+- **Logo** — Project → Settings → Logo (PNG, ≤ 500 KB)
+- **Accent color** — Project → Settings → Brand
+- **Receipt widget language** — localized to English, Amharic, Afaan Oromoo, and Somali
+- **Bank account order** — drag to reorder in the dashboard
+
+## Query parameters
+
+You can append optional query parameters to the `paymentUrl`:
+
+| Param | Purpose |
+|---|---|
+| `?lang=am` | Force UI language (auto-detected from browser by default) |
+| `?theme=dark` | Force dark mode regardless of system preference |
+
+## Success and cancel URLs
+
+The hosted page does not currently support merchant-return URLs (planned for v1.5). Until then, detect success by:
+
+- Receiving a `payment.approved` webhook, or
+- Polling `GET /api/v1/orders/{orderId}` and checking `status === "PAID"`.
+
+<Callout type="warn">
+  Don't redirect the customer back to your site based on the in-page polling result. The customer may close the tab before the redirect fires, and you'll miss the state change. Always rely on the webhook or the API.
+</Callout>

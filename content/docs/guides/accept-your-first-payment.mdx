@@ -1,0 +1,158 @@
+---
+title: Accept your first payment
+description: A complete end-to-end integration in 30 minutes.
+---
+
+
+# Accept your first payment (end-to-end)
+
+This tutorial walks you through a complete integration: backend order creation, hosted checkout, webhook handling, and order fulfillment. By the end, you'll have a small Express server that accepts a test payment and prints a confirmation.
+
+## What you'll build
+
+- A Node.js (Express) backend that creates orders
+- A static HTML page with a "Pay" button that redirects to the hosted checkout
+- A webhook endpoint that listens for `payment.approved`
+
+## 1. Project setup
+
+```bash
+mkdir pygate-example && cd pygate-example
+npm init -y
+npm install express @pygate/node dotenv
+npm install -D typescript @types/node @types/express tsx
+```
+
+Create `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist"
+  },
+  "include": ["src/**/*"]
+}
+```
+
+Create `.env`:
+
+```
+PYGATE_API_KEY=pgk_test_4b1c2d3e4f5g6h7i
+PYGATE_WEBHOOK_SECRET=whsec_test_xxxxxxxxxxxxxxxx
+PORT=3000
+```
+
+## 2. The server
+
+Create `src/server.ts`:
+
+```ts
+import "dotenv/config";
+import express from "express";
+import { Pygate } from "@pygate/node";
+import { verifyWebhook } from "@pygate/webhooks";
+
+const app = express();
+const pygate = new Pygate({ apiKey: process.env.PYGATE_API_KEY! });
+
+// Capture the raw body for webhook signature verification
+app.use(
+  "/webhooks/pygate",
+  express.raw({ type: "application/json" }),
+);
+
+app.get("/", (req, res) => {
+  res.send(`
+    <html>
+      <body>
+        <h1>PyGate Example Store</h1>
+        <button onclick="pay()">Buy widget for 250 ETB</button>
+        <script>
+          async function pay() {
+            const res = await fetch("/create-order", { method: "POST" });
+            const { paymentUrl } = await res.json();
+            window.location = paymentUrl;
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+app.post("/create-order", async (req, res) => {
+  const order = await pygate.orders.create({
+    amount: 250,
+    description: "Widget",
+    currency: "ETB",
+    metadata: { internalId: "widget-001" },
+  });
+  res.json({ paymentUrl: order.paymentUrl });
+});
+
+app.post("/webhooks/pygate", async (req, res) => {
+  const ok = verifyWebhook({
+    payload: req.body as Buffer,
+    signature: req.headers["x-pygate-signature"] as string,
+    timestamp: req.headers["x-pygate-timestamp"] as string,
+    secret: process.env.PYGATE_WEBHOOK_SECRET!,
+    tolerance: 300,
+  });
+  if (!ok) return res.status(401).send("bad signature");
+
+  const event = JSON.parse((req.body as Buffer).toString("utf8"));
+  console.log("Received event:", event.type, event.data);
+
+  // Fulfill the order here (send product, unlock feature, etc.)
+  if (event.type === "payment.approved") {
+    await fulfillOrder(event.data.orderId);
+  }
+
+  res.status(200).send("ok");
+});
+
+async function fulfillOrder(orderId: string) {
+  console.log("Fulfilling order", orderId);
+  // …
+}
+
+app.listen(Number(process.env.PORT), () => {
+  console.log(`Server on http://localhost:${process.env.PORT}`);
+});
+```
+
+## 3. Run it
+
+```bash
+npx tsx src/server.ts
+```
+
+Open `http://localhost:3000`, click "Buy widget". You'll be redirected to the hosted checkout page. In test mode, simulate a payment:
+
+1. Pick the bank account.
+2. Click **Simulate payment**.
+3. Pick a fixture (e.g. "Approved — matches order").
+4. Click **Upload receipt** (the simulator generates a fake receipt for you).
+
+The webhook endpoint will log `payment.approved`, and your order is fulfilled.
+
+## 4. Subscribe to the webhook
+
+For the local dev server to receive webhooks, you need to expose it to the internet. Use [ngrok](https://ngrok.com) or [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/):
+
+```bash
+ngrok http 3000
+```
+
+Then in the dashboard, add a webhook endpoint with the `https://…ngrok-free.app/webhooks/pygate` URL, subscribed to `payment.approved`.
+
+## 5. Next steps
+
+- Replace the simulator with a real receipt upload from your own UI.
+- Add a [Go-live checklist](/guides/go-live-checklist) before switching to a `pgk_live_` key.
+- Read the [webhooks reference](/webhooks/overview) for event names and retry semantics.

@@ -1,0 +1,61 @@
+---
+title: Webhooks overview
+description: Receive payment events on your own server.
+---
+
+
+# Webhooks
+
+Webhooks let PyGate push real-time events to your server instead of forcing you to poll. They're the recommended way to react to order and payment transitions.
+
+## Subscribing
+
+Open your project → **Webhooks** → **Add endpoint**. For each endpoint you specify:
+
+- **URL** — the HTTPS endpoint that will receive POST requests
+- **Events** — the subset of events you want to receive (e.g. `payment.approved`)
+- **Label** — optional human-readable name
+
+When you save, PyGate generates a **signing secret** (prefix `whsec_…`). Show it once and store it in your secrets manager. You can rotate the secret at any time from the dashboard.
+
+## What gets sent
+
+Every webhook delivery is a POST request with:
+
+```http
+POST /your/webhook HTTP/1.1
+Content-Type: application/json
+X-PyGate-Timestamp: 1723563008
+X-PyGate-Signature: sha256=4f7c1c2a…
+X-PyGate-Delivery-Id: dly_3x4mpl3d3l1v3ry1d
+X-PyGate-Event: payment.approved
+User-Agent: PyGate-Webhooks/1.0
+
+{
+  "id": "evt_3x4mpl3v3n71d3",
+  "type": "payment.approved",
+  "createdAt": "2026-08-13T15:26:48.000Z",
+  "data": { ... }
+}
+```
+
+The body is always a JSON object with at minimum `id`, `type`, `createdAt`, and `data`. The `data` shape varies per event — see the [event catalog](/webhooks/events).
+
+## Responding
+
+Acknowledge by returning any `2xx` status within **10 seconds**. If you don't, PyGate treats the delivery as failed and retries with backoff (see [Retries & DLQ](/webhooks/retries-and-dlq)).
+
+For non-2xx responses, PyGate applies different retry rules:
+
+- `4xx` (except 408/429) — no retry, the request is permanently failed. Fix your endpoint and replay.
+- `408`, `429`, `5xx`, network error — retry.
+
+## The delivery model
+
+PyGate uses a **durable queue**. The moment an event is created, a row is inserted into the `WebhookDelivery` table with status `PENDING`. A background worker polls the table and ships the payload. Between your server and PyGate, the delivery is guaranteed to be enqueued; whether it reaches you depends on your endpoint.
+
+This is different from most "fire-and-forget" webhook systems because:
+
+1. **You can replay any delivery.** The dashboard shows every attempt, the response body, and the signature. One click replays.
+2. **Dead-letter queue is a first-class view.** Failed deliveries are listed in the dashboard with a "Re-enqueue" button.
+3. **You can audit everything.** Every state transition is logged.

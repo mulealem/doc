@@ -1,0 +1,67 @@
+---
+title: Go-live checklist
+description: Everything to verify before switching to a live PyGate project.
+---
+
+
+# Go-live checklist
+
+Before flipping your project to live mode, walk through this list. Each item is a single sentence; the dashboard walks you through the same list interactively.
+
+## Project setup
+
+- [ ] Project name is meaningful (it'll appear on every receipt)
+- [ ] Logo is uploaded (PNG with transparency, ≤ 500 KB)
+- [ ] Brand color is set
+- [ ] Default language is set
+- [ ] Bank accounts are added with real account numbers and verified by the issuing bank
+- [ ] At least one bank account is marked **Enabled**
+
+## API keys
+
+- [ ] Live API key (`pgk_live_`) is generated
+- [ ] Live key is stored in a secrets manager (Doppler, AWS Secrets Manager, Vault, etc.)
+- [ ] Test key (`pgk_test_`) is still working for parallel testing
+- [ ] All `pgk_test_` keys are scheduled for deletion after cutover
+
+## Webhooks
+
+- [ ] At least one webhook endpoint is registered against the live environment
+- [ ] Endpoint URL is HTTPS
+- [ ] Signature verification is implemented (see [Signature verification](/webhooks/signing))
+- [ ] Idempotency dedupe on `X-PyGate-Delivery-Id` is implemented
+- [ ] Endpoint responds in under 10 seconds (or ACKs fast and processes async)
+- [ ] Endpoint is monitored — alerts on 5xx rate
+
+## Application
+
+- [ ] Error handling is in place for every API error code (see [Errors](/api-reference/errors))
+- [ ] Retry logic respects `Retry-After` headers
+- [ ] Order creation passes a unique `metadata.idempotencyKey` to prevent duplicates
+- [ ] Order lookup is used as a fallback; webhooks are the primary mechanism
+- [ ] Receipts are not stored on your servers — they live in PyGate's R2
+
+## Tests
+
+- [ ] All sandbox fixtures have been tested (see [Test mode](/guides/test-mode))
+- [ ] Webhook endpoint was tested against each event type
+- [ ] Signature verification was tested against a tampered payload
+- [ ] Old test webhooks have been cleaned up
+
+## Operational
+
+- [ ] `support@pygate.local` is on your incident response rota
+- [ ] PyGate status page ([status.pygate.example.com](https://status.pygate.example.com)) is bookmarked
+- [ ] At least two team members have dashboard access
+- [ ] Billing details are filled in (PyGate charges per-transaction, invoiced monthly)
+
+## Cutover
+
+- [ ] Soft launch: 1% of traffic for 24 hours
+- [ ] Monitor 5xx error rate on your `/create-order` endpoint
+- [ ] Monitor webhook delivery success rate (dashboard → Webhooks → Success rate)
+- [ ] Promote to 100% after 24 hours with no incidents
+
+<Callout type="info">
+  The dashboard's **Go-live wizard** runs through this same checklist with per-item guidance. Find it at Project → Settings → Go live.
+</Callout>

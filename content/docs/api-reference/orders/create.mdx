@@ -1,0 +1,124 @@
+---
+title: Create order
+description: Create a new order and return a hosted payment URL.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Create an order
+
+<Endpoint method="POST" path="/api/v1/orders" auth="x-api-key" />
+
+Creates an order for a payment. Returns a hosted `paymentUrl` that you redirect the customer to.
+
+## Request body
+
+<Params>
+  <Param name="amount" type="number" required>
+    Positive amount in major units. Must be representable in the chosen currency's minor units (see [Currencies & amounts](/concepts/currencies-and-amounts)).
+  </Param>
+  <Param name="description" type="string" required>
+    Human-readable description. Shown on the checkout page and on the receipt.
+  </Param>
+  <Param name="currency" type="string" default="ETB">
+    ISO 4217 currency code. Examples: `ETB`, `USD`, `EUR`. Only currencies enabled on your project are accepted.
+  </Param>
+  <Param name="items" type="array">
+    Optional line items for the receipt. Each item: `{ name, quantity, amount, amountMinor }`.
+  </Param>
+  <Param name="metadata" type="object">
+    Free-form key/value pairs. Echoed back in webhooks and order lookups. Useful for storing your own internal IDs.
+  </Param>
+  <Param name="expiresInSeconds" type="number" default="600" min="60" max="86400">
+    How long the payment URL stays valid. After this, the order auto-transitions to `EXPIRED`.
+  </Param>
+</Params>
+
+## Example
+
+<Tabs items={["cURL", "Node", "Python", "PHP", "Go"]}>
+  <Tab value="cURL">
+    ```bash
+    curl -X POST https://dashboard.example.com/api/v1/orders \
+      -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+      -H "content-type: application/json" \
+      -d '{
+        "amount": 250,
+        "description": "Test order",
+        "currency": "ETB"
+      }'
+    ```
+  </Tab>
+  <Tab value="Node">
+    ```ts
+    import { createOrder } from "@pygate/node";
+
+    const order = await createOrder({
+      apiKey: process.env.PYGATE_API_KEY,
+      amount: 250,
+      description: "Test order",
+      currency: "ETB",
+    });
+
+    console.log(order.paymentUrl);
+    ```
+  </Tab>
+  <Tab value="Python">
+    ```python
+    from pygate import Pygate
+
+    client = Pygate(api_key=os.environ["PYGATE_API_KEY"])
+
+    order = client.orders.create(
+        amount=250,
+        description="Test order",
+        currency="ETB",
+    )
+
+    print(order.payment_url)
+    ```
+  </Tab>
+  <Tab value="PHP">
+    ```php
+    <?php
+    $order = $client->orders->create([
+        "amount" => 250,
+        "description" => "Test order",
+        "currency" => "ETB",
+    ]);
+    ```
+  </Tab>
+  <Tab value="Go">
+    ```go
+    order, err := client.Orders.Create(ctx, pygate.OrderCreateParams{
+        Amount:      250,
+        Description: "Test order",
+        Currency:    "ETB",
+    })
+    ```
+  </Tab>
+</Tabs>
+
+## Responses
+
+<Response status="200" body={{
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  paymentUrl: "https://checkout.example.com/pay/ord_3x4mpl3t3st0rd3r1d2",
+  expiresInSeconds: 600,
+  expiresAt: "2026-08-13T15:30:00.000Z",
+  amount: 250,
+  amountMinor: 25000,
+  currency: "ETB",
+  description: "Test order"
+}} />
+
+<Response status="400" body={{ error: "amount must be a positive number" }} description="amount is missing, zero, or negative." />
+<Response status="400" body={{ error: "description is required" }} description="description is missing or not a string." />
+<Response status="400" body={{ error: "No bank account is enabled for this project" }} description="The project has no bank accounts configured." />
+<Response status="401" body={{ error: "Missing x-api-key header" }} description="The x-api-key header is absent." />
+<Response status="401" body={{ error: "Invalid API key" }} description="The x-api-key doesn't match any project." />
+<Response status="429" body={{ error: "Too many order creations. Try again shortly." }} description="Rate limited. Honor the Retry-After header." />
+
+<Callout type="info">
+  Redirect the customer to `paymentUrl` instead of embedding it in an iframe. The checkout page is hosted on a separate origin (`checkout.example.com`) by design — it keeps your app out of PCI scope and gives you free access to PyGate's automatic UI updates.
+</Callout>

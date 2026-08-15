@@ -1,0 +1,92 @@
+---
+title: Migrate from Stripe
+description: A side-by-side-comparison for teams moving from Stripe to PyGate.
+---
+
+
+# Migrating from Stripe
+
+PyGate and Stripe solve different problems. Stripe is a card processor; PyGate is a receipt-based push-payment gateway. If your customers pay with bank transfers or mobile money (or in markets where card penetration is low), PyGate is a better fit.
+
+This guide walks through the conceptual differences and the migration steps for a typical Stripe integration.
+
+## Conceptual differences
+
+| Concept | Stripe | PyGate |
+|---|---|---|
+| Customer pays with | Card | Bank transfer, mobile money |
+| Charge model | `PaymentIntent` (customer present) | `Order` (customer present) |
+| Confirmation model | Stripe hosts a form, then confirms a charge | Customer pays on their own app, uploads a receipt |
+| Webhook trigger | `payment_intent.succeeded` | `payment.approved` |
+| Refund | `POST /v1/refunds` | Outside PyGate (initiate transfer from your bank) |
+| Disputes | `charge.dispute.created` | Customer opens dispute from checkout page |
+| PCI scope | SAQ-A at best | **None** |
+| Settlement | 1–3 business days | Real-time (bank's schedule) |
+| Currencies | 135+ | ETB (USD/EUR via separate workflow) |
+
+## Mapping your code
+
+### Stripe
+
+```ts
+const intent = await stripe.paymentIntents.create({
+  amount: 25000,
+  currency: "usd",
+  description: "Widget",
+});
+// Customer completes payment on Stripe-hosted page
+// You receive payment_intent.succeeded webhook
+```
+
+### PyGate
+
+```ts
+const order = await pygate.orders.create({
+  amount: 250,
+  description: "Widget",
+  currency: "ETB",
+});
+// Redirect customer to order.paymentUrl
+// Customer pays on their bank app, uploads receipt
+// You receive payment.approved webhook
+```
+
+## Webhook comparison
+
+| Stripe | PyGate |
+|---|---|
+| `payment_intent.succeeded` | `payment.approved` |
+| `payment_intent.payment_failed` | `payment.rejected` |
+| `charge.refunded` | (manual — see refunds) |
+| `charge.dispute.created` | `order.disputed` |
+| `charge.dispute.closed` | `dispute.resolved` |
+| `payment_intent.processing` | `payment.processing` |
+
+The event ID concept is the same; the header is `X-PyGate-Delivery-Id` instead of Stripe's `Stripe-Signature`.
+
+## Signature verification
+
+The HMAC model is similar but not identical. PyGate includes a timestamp in the signed payload (Stripe does too, but the format is different). Re-implement the verify per [Signature verification](/webhooks/signing).
+
+## What to keep
+
+- Your fraud detection — the `metadata` field is yours, and we echo it back in webhooks.
+- Your order database — PyGate doesn't replace your order history; it just answers "did this payment go through?".
+- Your webhook handler structure — the endpoint just listens for a different signature.
+
+## What to remove
+
+- The Stripe Elements / card form — you don't need it.
+- PCI compliance — the checkout page is hosted on PyGate's origin, so you have no card data.
+- 3DS handling — N/A.
+
+## Side-by-side rollout
+
+1. Add a feature flag for `paymentProvider` (`stripe` vs `pygate`)
+2. Split orders by currency: `ETB` → PyGate, `USD` → Stripe
+3. Run both in parallel for 2 weeks
+4. Drop Stripe once you have data on PyGate's approval rate
+
+<Callout type="info">
+  PyGate doesn't process cards. If 100% of your revenue is card-based, you don't need PyGate. If 30%+ is bank transfer or mobile money, PyGate is materially cheaper than building a manual reconciliation process.
+</Callout>

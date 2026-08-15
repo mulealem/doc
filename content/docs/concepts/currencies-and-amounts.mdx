@@ -1,0 +1,46 @@
+---
+title: Currencies & amounts
+description: How PyGate handles currency, minor units, and rounding.
+---
+
+# Currencies and amounts
+
+PyGate accepts any currency that has a sensible ISO 4217 code and a known number of decimal places. The default is **ETB** (Ethiopian Birr).
+
+## Two representations
+
+Every monetary amount is stored in two forms:
+
+- `amount` — the value you sent, in **major units** (e.g. `250.00`).
+- `amountMinor` — the same value in **minor units** (e.g. `25000`).
+
+`amountMinor` is the integer you should persist and reason about. Float arithmetic on `amount` will eventually betray you.
+
+```js
+// Good
+const totalMinor = items.reduce((acc, i) => acc + i.amountMinor, 0);
+
+// Bad
+const total = items.reduce((acc, i) => acc + i.amount, 0); // 0.1 + 0.2 = 0.30000000000000004
+```
+
+## Decimal places
+
+The default is **2 decimal places** (cents-equivalent). For the few currencies that use 0 or 3, PyGate uses the ISO 4217 minor unit count:
+
+| Currency | Decimals | Example |
+|---|---|---|
+| ETB | 2 | `amount: 250.00` |
+| USD | 2 | `amount: 9.99` |
+| JPY | 0 | `amount: 100` |
+| KWD | 3 | `amount: 0.250` |
+
+When you send `amount: 9.99` for an ETB order, PyGate multiplies by 100 and stores `amountMinor: 999`. If you send `amount: 9.999`, PyGate rounds to `amountMinor: 1000` (one Birr) and rejects the request with a 400.
+
+## Exchange rates
+
+PyGate does **not** convert. If you create an order for `USD` and the customer pays in `ETB`, the payment is rejected. You must create the order in the currency the customer is paying in.
+
+## Refunds
+
+There is no first-class refund endpoint. To refund a customer, you initiate a transfer from your bank account back to theirs (outside PyGate) and update the order's status manually via the dashboard. The future home of a `POST /api/v1/refunds` endpoint is in the roadmap.

@@ -1,0 +1,63 @@
+---
+title: Idempotency
+description: How to safely handle the same delivery twice.
+---
+
+
+# Idempotency
+
+Every webhook delivery has a unique ID in the `X-PyGate-Delivery-Id` header (e.g. `dly_3x4mpl3d3l1v3ry1d`). The same delivery keeps the same ID across all 8 retry attempts. A replay creates a new delivery with a new ID, but the event itself (`X-PyGate-Event` / payload `id`) keeps the same value.
+
+The first thing your webhook handler should do is deduplicate on the delivery ID.
+
+## Recommended pattern
+
+```ts
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+const SECRET = process.env.PYGATE_WEBHOOK_SECRET!;
+
+export async function handle(req: Request) {
+  const deliveryId = req.headers.get("X-PyGate-Delivery-Id");
+  if (!deliveryId) return new Response("missing delivery id", { status: 400 });
+
+  // 1. Verify signature first — drop unsigned traffic.
+  if (!verifySignature(req, SECRET)) return new Response("bad sig", { status: 401 });
+
+  // 2. Check if we've already processed this delivery.
+  if (await alreadyProcessed(deliveryId)) return new Response("ok", { status: 200 });
+
+  // 3. Process the event.
+  const event = await req.json();
+  try {
+    await processEvent(event);
+  } catch (err) {
+    // Processing failed — return 5xx so PyGate retries.
+    return new Response("please retry", { status: 503 });
+  }
+
+  // 4. Mark the delivery as processed. ONLY do this AFTER successful processing.
+  await markProcessed(deliveryId);
+
+  return new Response("ok", { status: 200 });
+}
+```
+
+## Storage
+
+Store processed delivery IDs in a fast lookup table. Two viable options:
+
+1. **Same database as your transactional store** — add a `WebhookDelivery` table with `delivery_id` as the primary key. Cheapest, but ties the webhook handler to your main DB.
+2. **Redis** — `SET deliveryId 1 EX 86400 NX` (NX = only if not exists, 24h TTL). Cheap, fast, self-cleaning.
+
+Avoid inserting the same `deliveryId` into the same table without a unique constraint — you'll create duplicate side effects on the next retry.
+
+## When to use the event ID instead
+
+The payload's `id` field (e.g. `evt_3x4mpl3v3n71d3`) is unique per **event**, not per delivery. If a single event is replayed to multiple endpoints, the same `id` shows up in all of them with different `deliveryId` headers — and that's fine; both endpoints should process it.
+
+Use the `deliveryId` to dedupe **within** a single endpoint. Use the `id` if you want to assert "this event has been processed by my system at least once" across endpoints.
+
+<Callout type="info">
+  Two deliveries with the same `deliveryId` are guaranteed to have the same payload. Two deliveries with the same `id` (event ID) but different `deliveryId` are guaranteed to have the same payload too — PyGate never modifies an event after it's created.
+</Callout>

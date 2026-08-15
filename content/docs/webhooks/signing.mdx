@@ -1,0 +1,139 @@
+---
+title: Signature verification
+description: How to verify that a webhook came from PyGate.
+---
+
+
+# Signature verification
+
+Every webhook request is signed with HMAC-SHA256. The signature is sent in the `X-PyGate-Signature` header alongside a Unix timestamp in `X-PyGate-Timestamp`. You must verify both before trusting the payload.
+
+## The signature
+
+```
+sha256 = HMAC-SHA256(key=signing_secret, msg=`${timestamp}.${raw_body}`)
+```
+
+The signed string is **`timestamp.raw_body`** — a literal dot, then the raw request body (the JSON bytes, not the parsed object). The signature is included in the header as `sha256=<hex>`.
+
+## Why a timestamp?
+
+Including the timestamp in the signed payload prevents replay attacks. Your receiver should reject any request whose timestamp is more than **5 minutes** away from the current time. This bounds the window in which a stolen, valid signature can be replayed.
+
+## Verifying in your language
+
+<Tabs items={["Node", "Python", "PHP", "Go"]}>
+  <Tab value="Node">
+    ```ts
+    import { createHmac, timingSafeEqual } from "node:crypto";
+
+    const SECRET = process.env.PYGATE_WEBHOOK_SECRET!;
+
+    export function verify(req: Request): boolean {
+      const sig = req.headers.get("X-PyGate-Signature");
+      const ts = req.headers.get("X-PyGate-Timestamp");
+      if (!sig || !ts) return false;
+
+      const timestamp = Number(ts);
+      if (Math.abs(Date.now() / 1000 - timestamp) > 5 * 60) return false;
+
+      const body = req.bodyText ?? ""; // raw text, not res.json()
+      const expected = createHmac("sha256", SECRET)
+        .update(`${timestamp}.${body}`)
+        .digest("hex");
+
+      const sigBuf = Buffer.from(sig.replace(/^sha256=/, ""), "hex");
+      const expBuf = Buffer.from(expected, "hex");
+      if (sigBuf.length !== expBuf.length) return false;
+      return timingSafeEqual(sigBuf, expBuf);
+    }
+    ```
+  </Tab>
+  <Tab value="Python">
+    ```python
+    import hmac, hashlib, time, os
+
+    SECRET = os.environ["PYGATE_WEBHOOK_SECRET"].encode()
+
+    def verify(headers: dict, body: bytes) -> bool:
+        sig = headers.get("X-PyGate-Signature", "")
+        ts = headers.get("X-PyGate-Timestamp", "")
+        if not sig or not ts:
+            return False
+
+        if abs(time.time() - int(ts)) > 5 * 60:
+            return False
+
+        mac = hmac.new(SECRET, f"{ts}.".encode() + body, hashlib.sha256)
+        expected = mac.hexdigest()
+        return hmac.compare_digest(sig.removeprefix("sha256="), expected)
+    ```
+  </Tab>
+  <Tab value="PHP">
+    ```php
+    <?php
+    function verify(array $headers, string $body): bool {
+        $secret = getenv("PYGATE_WEBHOOK_SECRET");
+        $sig = $headers["X-PyGate-Signature"] ?? "";
+        $ts = $headers["X-PyGate-Timestamp"] ?? "";
+
+        if (!$sig || !$ts) return false;
+        if (abs(time() - (int)$ts) > 300) return false;
+
+        $expected = hash_hmac("sha256", "{$ts}.{$body}", $secret);
+        return hash_equals(substr($sig, 7), $expected); // skip "sha256="
+    }
+    ```
+  </Tab>
+  <Tab value="Go">
+    ```go
+    import (
+        "crypto/hmac"
+        "crypto/sha256"
+        "encoding/hex"
+        "os"
+        "strconv"
+        "strings"
+        "time"
+    )
+
+    func Verify(headers map[string]string, body []byte) bool {
+        sig := strings.TrimPrefix(headers["X-PyGate-Signature"], "sha256=")
+        ts := headers["X-PyGate-Timestamp"]
+        if sig == "" || ts == "" {
+            return false
+        }
+
+        tsInt, _ := strconv.ParseInt(ts, 10, 64)
+        if time.Since(time.Unix(tsInt, 0)) > 5*time.Minute {
+            return false
+        }
+
+        mac := hmac.New(sha256.New, []byte(os.Getenv("PYGATE_WEBHOOK_SECRET")))
+        mac.Write([]byte(ts + "."))
+        mac.Write(body)
+        expected := hex.EncodeToString(mac.Sum(nil))
+
+        return hmac.Equal([]byte(sig), []byte(expected))
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Common pitfalls
+
+<Callout type="warn">
+  **Don't** parse the JSON body before computing the signature. JSON re-serialization can change whitespace, key order, and Unicode escaping, breaking the HMAC. Use the raw bytes off the wire.
+</Callout>
+
+<Callout type="warn">
+  **Don't** use `===` (or `==`) to compare signatures. Always use a constant-time comparison function (`crypto.timingSafeEqual`, `hmac.compare_digest`, `hash_equals`, `hmac.Equal`). Otherwise you leak information about the signature byte-by-byte.
+</Callout>
+
+<Callout type="warn">
+  **Don't** skip the timestamp check. A signature alone is not enough — without the timestamp check, a stolen signature from an old delivery can be replayed indefinitely.
+</Callout>
+
+## What to do when verification fails
+
+Return `401`. PyGate will not retry 401s (they're a client error), so this signals "your endpoint is not configured correctly" without amplifying the problem. Log the failed request and inspect the headers and the signing secret in your dashboard.

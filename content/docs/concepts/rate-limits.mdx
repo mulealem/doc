@@ -1,0 +1,70 @@
+---
+title: Rate limits
+description: Quotas, limits, and how to handle a 429.
+---
+
+
+# Rate limits
+
+PyGate enforces per-IP rate limits on the small set of endpoints that are expensive or attractive to abuse. Most read-only endpoints (order lookup, etc.) are not rate-limited.
+
+## Limits
+
+| Endpoint | Limit | Window |
+|---|---|---|
+| `POST /api/v1/orders` | 60 requests | per IP, per minute |
+| `POST /api/v1/verify` | 60 requests | per IP, per minute |
+| All other endpoints | None | — |
+
+The limit is per IP, not per API key. If you run multiple services behind a single NAT, they share the bucket.
+
+## Handling 429
+
+When you hit the limit, the response is:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 17
+Content-Type: application/json
+
+{
+  "error": "Too many order creations. Try again shortly."
+}
+```
+
+The `Retry-After` header tells you how many seconds to wait. Honor it.
+
+```js
+async function createOrderWithRetry(payload) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const res = await fetch("https://dashboard.example.com/api/v1/orders", {
+      method: "POST",
+      headers: { "x-api-key": API_KEY, "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.status === 429) {
+      const seconds = Number(res.headers.get("Retry-After") ?? 1);
+      await new Promise((r) => setTimeout(r, seconds * 1000));
+      continue;
+    }
+
+    return res.json();
+  }
+  throw new Error("Rate limit hit 5 times in a row");
+}
+```
+
+<Callout type="warn">
+  Don't retry on `400` or `401`. The request will fail the same way every time, and you'll burn through your quota for nothing.
+</Callout>
+
+## Higher limits
+
+If you have a legitimate need for more than 60 req/min/IP (e.g. a high-volume marketplace), email `support@pygate.local` with:
+
+- Your account ID
+- The peak request rate you expect
+- Which endpoint(s) you'll hit
+
+Quotas are typically raised within 1–2 business days.

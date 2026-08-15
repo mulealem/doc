@@ -1,0 +1,85 @@
+---
+title: Compliance & data retention
+description: What data PyGate stores, for how long, and how to request deletion.
+---
+
+
+# Compliance and data retention
+
+## What PyGate stores
+
+For every order, PyGate stores:
+
+- `orderId` (cuid)
+- Amount, currency, description (your input)
+- `metadata` (your input, echoed back)
+- Status (PENDING, PAID, EXPIRED, REJECTED)
+- Creation and update timestamps
+
+For every payment (when a receipt is uploaded), PyGate stores:
+
+- `paymentId` (cuid)
+- Link to the receipt image in R2 / S3-compatible storage
+- OCR-extracted fields (payer name, account, amount, reference)
+- Verification result and the issuing bank's response
+- Approval/rejection timestamps
+
+For every webhook delivery, PyGate stores:
+
+- The full payload (encrypted at rest)
+- The HMAC signature
+- The target URL
+- Attempt count, status, response code, response body
+
+## What PyGate does NOT store
+
+- Customer card numbers (there are no cards)
+- Customer passwords (handled by Better Auth in the dashboard)
+- Customer email address (collected only when a dispute or support ticket is opened)
+- Customer device fingerprint or IP beyond the request
+
+## Retention
+
+| Data | Retention |
+|---|---|
+| Orders | 7 years (tax compliance) |
+| Payments | 7 years (audit) |
+| Receipt images | 2 years (the bank is the source of truth after that) |
+| Webhook deliveries | 90 days (after which the delivery is purged) |
+| API request logs | 30 days |
+| Audit logs (dashboard actions) | 2 years |
+
+After the retention period, data is purged automatically. There is no soft-delete grace period.
+
+## Right to deletion
+
+Customers have the right to request deletion of their data. PyGate handles this on your behalf — when a customer requests deletion:
+
+1. The customer's dispute/support ticket is purged.
+2. The receipt image is deleted from R2.
+3. The OCR-extracted fields (name, account) are nulled out.
+4. The `orderId` is preserved for tax compliance but no longer references personal data.
+
+To submit a deletion request, email `privacy@pygate.local` with the customer's order ID or payment ID.
+
+## Subprocessors
+
+PyGate uses the following third-party services:
+
+- **Postgres** (self-hosted or Neon) — primary database
+- **Cloudflare R2** — receipt image storage
+- **Resend** — transactional email (dashboard invites, password resets)
+- **Sentry** — error tracking (self-hosted Sentry, no PII)
+- **Tesseract.js / pdf-parse** — OCR (runs in-process, no data leaves the server)
+
+A signed Data Processing Agreement (DPA) is available on request.
+
+## Compliance posture
+
+PyGate is not PCI-DSS certified because **no card data is processed**. There is no PCI scope for merchants integrating PyGate.
+
+PyGate is GDPR-compliant by structure. The data model is designed so that personal data (name, account) is segregated from transactional data (order, amount) and can be deleted independently.
+
+<Callout type="info">
+  If you have a specific compliance question (SOC 2, HIPAA, et al.), email `compliance@pygate.local`. Custom packages are available for enterprise customers.
+</Callout>

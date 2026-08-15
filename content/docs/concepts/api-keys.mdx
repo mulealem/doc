@@ -1,0 +1,56 @@
+---
+title: API keys
+description: How PyGate authenticates your requests and how to manage keys safely.
+---
+
+
+# API keys
+
+Every request to the public REST API is authenticated with an **API key** in the `x-api-key` header. API keys are scoped to a single project, can be rotated, and never expire.
+
+## Key format
+
+```
+pgk_test_4b1c2d3e4f5g6h7i8j9k0lm1n2o3p4q5r6s7t8u9v0w1x2y3z4a5b6c7d8e9f0
+pgk_live_4b1c2d3e4f5g6h7i8j9k0lm1n2o3p4q5r6s7t8u9v0w1x2y3z4a5b6c7d8e9f0
+```
+
+The prefix `pgk_test_` vs `pgk_live_` lets you identify the environment at a glance. The key is shown in full **once** when generated and never again — only the prefix is displayed in the dashboard.
+
+## Authentication
+
+```bash
+curl https://dashboard.example.com/api/v1/orders \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+```
+
+If the header is missing or the key is unknown, the API responds with `401`:
+
+```json
+{ "error": "Invalid API key" }
+```
+
+## Creating and rotating keys
+
+Keys are managed from the **Project → API keys** page in the dashboard. You can create as many as you want; each one is independent. Rotation pattern:
+
+1. Create a new key.
+2. Deploy your app with both keys (new one first in your list).
+3. Switch reads to the new key.
+4. Remove the old key.
+
+There is no built-in revocation grace period — once a key is deleted, it stops working on the next request. If you need soft-delete, manage the overlap in your own config.
+
+<Callout type="warn">
+  Never commit API keys to version control. Use environment variables, a secrets manager (Doppler, AWS Secrets Manager, HashiCorp Vault), or your hosting provider's secret store.
+</Callout>
+
+## Scoping
+
+Keys are **project-scoped** — a key can only operate on its own project's orders, payments, and webhooks. There is no concept of a workspace-wide key.
+
+Keys are **not** role-scoped. If you need a readonly key for a reporting job, create a separate project (and slosh the data via a webhook into your warehouse).
+
+## Internal vs public keys
+
+The `BACKEND_API_TOKENS` value used between the dashboard and the checkout BFF is **not** an API key. It's a separate, server-to-server bearer token used on `/api/internal/checkout/*`. Don't reuse the same value, and don't expose it to the browser.

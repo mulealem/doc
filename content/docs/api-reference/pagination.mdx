@@ -1,0 +1,32 @@
+---
+title: Pagination
+description: A placeholder for the upcoming pagination semantics.
+---
+
+
+# Pagination
+
+<Callout type="info">
+  The PyGate REST API is currently **single-resource** — you look up one order at a time, you stream one webhook at a time. No list endpoints exist today, so no pagination is needed.
+</Callout>
+
+## Why no list endpoints
+
+PyGate is built around push-based events rather than pull-based reconciliation. The supported patterns are:
+
+- **Webhooks** — receive `payment.approved` etc. as they happen, and persist them in your own database.
+- **Single-order polling** — `GET /api/v1/orders/{orderId}` when you genuinely need on-demand lookup.
+
+If you need a list-style query (e.g. "all orders in the last 24 hours"), derive it from your own database; PyGate doesn't want to be a query layer on top of your transactional store.
+
+## Future
+
+When list endpoints are introduced (expected in v1.5, behind a `v2` prefix), they will use cursor-based pagination:
+
+```http
+GET /api/v2/orders?limit=50&starting_after=ord_…
+```
+
+The response will include a `next_cursor` field and a `has_more` boolean. We will not introduce offset-based pagination, because cursors are robust to concurrent writes.
+
+If you have a use case that needs list endpoints today, please email `support@pygate.local` — it informs the v2 design.

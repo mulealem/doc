@@ -1,0 +1,42 @@
+---
+title: PyGate — receipt-based payment gateway
+description: A privacy-first payment gateway built around uploading receipts. Hosted checkout, REST API, webhook events, and an SDK for every major language.
+---
+
+
+# PyGate developer documentation
+
+PyGate is a **receipt-based payment gateway** for merchants and platforms that need to accept payments in markets where card-based processing is unreliable or unavailable. Customers pay via bank transfer or mobile money, photograph the receipt, and upload it. PyGate verifies the receipt against the issuing bank, then notifies you.
+
+This documentation is for developers integrating PyGate into a website, app, or backend. If you only need to sign in and check your dashboard, head to [dashboard.example.com](https://dashboard.example.com).
+
+<Callout type="info">
+  New to PyGate? Start with the [Quickstart](/quickstart) — you'll accept your first test payment in about five minutes.
+</Callout>
+
+## What you'll find here
+
+- **[Quickstart](/quickstart)** — sign up, create a project, make your first API call
+- **[Concepts](/concepts/how-it-works)** — how the receipt-based flow works, and how orders, payments, and webhooks relate
+- **[API reference](/api-reference/orders/create)** — every endpoint, every parameter, every response, in cURL / Node / Python / PHP / Go
+- **[Checkout](/checkout/hosted-page)** — the hosted payment page your customers actually see
+- **[Webhooks](/webhooks/overview)** — receive `payment.approved` and friends on your own server
+- **[SDKs](/sdks/node)** — official and community wrappers
+- **[Guides](/guides/accept-your-first-payment)** — step-by-step tutorials and runbooks
+
+## How PyGate is different
+
+| | Card gateways | PyGate |
+|---|---|---|
+| Customer pays with | Card | Bank transfer, mobile money, telebirr, CBE Birr, … |
+| You integrate | Card form / iframe | Hosted redirect or a single `POST` |
+| Funds settle | 1–3 days, with chargeback risk | Pre-funded — you see the receipt before value moves |
+| PCI scope | Yes (SAQ-A at best) | **None** — the page is hosted, no card data ever touches your server |
+| Customer friction | 4 fields, OTP, 3DS | Photograph + upload |
+| Failure modes | Declines, network errors | OCR misreads (we re-verify with the issuing bank) |
+
+## Get help
+
+- **Bug or doc error?** Open an issue on the docs repo.
+- **Integration question?** Email `support@pygate.local` or open a support ticket from the dashboard.
+- **Status page:** [status.pygate.example.com](https://status.pygate.example.com)

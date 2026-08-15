@@ -1,0 +1,53 @@
+---
+title: Orders & payments
+description: The lifecycle of an order and its payment, including every state transition.
+---
+
+# Orders and payments
+
+An order is the entry point for a payment. A payment is the receipt that fulfills it. Both are first-class objects in the API.
+
+## Order
+
+An order is created with `POST /api/v1/orders`. It captures everything you, the merchant, need to know about the transaction: what the customer is buying, how much, and in which currency.
+
+| State | Meaning |
+|---|---|
+| `PENDING` | Just created. The customer may still pay. |
+| `PAID` | A payment against this order has been approved. |
+| `EXPIRED` | `expiresInSeconds` elapsed before any payment was approved. |
+| `REJECTED` | A payment was uploaded but the verifier rejected it (amount mismatch, unreadable, etc.). |
+
+State transitions are monotonic: `PENDING` → `PAID` / `EXPIRED` / `REJECTED`. You won't see an order go back to `PENDING` once it has moved on.
+
+## Payment
+
+A payment is created when the customer uploads a receipt on the hosted checkout page. It holds the receipt image, the OCR-extracted fields, and the verification result.
+
+| State | Meaning |
+|---|---|
+| `PENDING` | Receipt uploaded; verification not yet kicked off. |
+| `PROCESSING` | OCR + smart verify in progress. |
+| `APPROVED` | Verified against the issuing bank. Funds are confirmed. |
+| `REJECTED` | Verification failed. See `reason` for the cause. |
+| `MANUAL_REVIEW` | Bank unreachable; flagged for human review. |
+
+## Timeouts
+
+- An order expires `expiresInSeconds` after creation. Default 600 (10 minutes), minimum 60, maximum 86400 (24 hours).
+- An approved payment triggers the `payment.approved` webhook within a few seconds of the bank confirming.
+- A rejected payment triggers `payment.rejected` immediately.
+
+## Concurrency
+
+PyGate does not enforce idempotency on order creation — you can create two orders with identical `amount` and `description`. If you need your own idempotency (to avoid charging the same customer twice), pass a unique key in `metadata.idempotencyKey` and check before creating.
+
+```json
+{
+  "amount": 250,
+  "description": "Test order",
+  "metadata": { "idempotencyKey": "order-2026-08-13-abc123" }
+}
+```
+
+The dashboard stores this in the order's `metadata` field and echoes it back in webhooks.

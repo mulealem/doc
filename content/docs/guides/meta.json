@@ -1,0 +1,4 @@
+{
+  "title": "Guides",
+  "pages": ["accept-your-first-payment", "test-mode", "go-live-checklist", "migrate-from-stripe", "compliance"]
+}

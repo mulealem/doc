@@ -1,0 +1,135 @@
+---
+title: Event catalog
+description: Every event PyGate can send, and what each payload contains.
+---
+
+import { WebhookEvent } from "@/components";
+import { payloadPaymentApproved, payloadPaymentRejected, webhookSecretCreate } from "@/lib/examples/webhooks";
+
+# Event catalog
+
+Subscribe to any subset of these events per webhook endpoint. All payloads share the same envelope:
+
+```ts
+{
+  id: string;        // unique event ID, e.g. "evt_…"
+  type: string;      // event name, e.g. "payment.approved"
+  createdAt: string; // ISO 8601 timestamp
+  data: object;      // event-specific payload
+}
+```
+
+## Payment lifecycle
+
+### `payment.approved`
+
+<WebhookEvent
+  name="payment.approved"
+  payload={payloadPaymentApproved}
+  secret={webhookSecretCreate}
+/>
+
+The receipt was verified against the issuing bank and the payment was approved. Your order fulfillment should kick off in response to this event.
+
+### `payment.rejected`
+
+<WebhookEvent
+  name="payment.rejected"
+  payload={payloadPaymentRejected}
+  secret={webhookSecretCreate}
+/>
+
+The receipt failed verification. Common reasons:
+
+| Reason | Meaning |
+|---|---|
+| `AMOUNT_MISMATCH` | Receipt amount differs from the order amount |
+| `REFERENCE_MISMATCH` | Receipt reference doesn't match the order |
+| `RECEIPT_UNREADABLE` | OCR couldn't extract fields — typically a blurry photo |
+| `BANK_REJECTED` | Issuing bank explicitly returned a rejection |
+| `EXPIRED` | Receipt is older than the bank's lookup window |
+
+The customer's payment is still in their bank account — it has not been moved. You may want to invite the customer to upload a clearer receipt.
+
+### `payment.processing`
+
+Sent when the receipt has been uploaded and verification has started but not yet completed. Useful for showing a "verifying" state in your UI.
+
+```json
+{
+  "id": "evt_…",
+  "type": "payment.processing",
+  "createdAt": "2026-08-13T15:25:13.000Z",
+  "data": {
+    "paymentId": "pay_…",
+    "orderId": "ord_…",
+    "status": "PROCESSING"
+  }
+}
+```
+
+## Order lifecycle
+
+### `order.expired`
+
+Sent when an order passes its `expiresAt` without a payment being approved.
+
+```json
+{
+  "id": "evt_…",
+  "type": "order.expired",
+  "createdAt": "2026-08-13T15:40:00.000Z",
+  "data": {
+    "orderId": "ord_…",
+    "status": "EXPIRED"
+  }
+}
+```
+
+## Disputes
+
+### `order.disputed`
+
+Sent when a customer opens a dispute from the checkout page.
+
+```json
+{
+  "id": "evt_…",
+  "type": "order.disputed",
+  "createdAt": "2026-08-13T15:32:00.000Z",
+  "data": {
+    "orderId": "ord_…",
+    "claimId": "clm_…",
+    "reason": "AMOUNT_MISMATCH",
+    "message": "I paid 250 but the receipt says 240."
+  }
+}
+```
+
+### `dispute.resolved`
+
+Sent when a dispute is resolved (either approved or rejected) from the dashboard.
+
+```json
+{
+  "id": "evt_…",
+  "type": "dispute.resolved",
+  "createdAt": "2026-08-13T16:00:00.000Z",
+  "data": {
+    "claimId": "clm_…",
+    "orderId": "ord_…",
+    "resolution": "APPROVED" | "REJECTED",
+    "note": "Manual override — verified by support."
+  }
+}
+```
+
+## Subscription patterns
+
+Most apps only need:
+
+- `payment.approved` — to fulfill orders
+- `payment.rejected` — to invite the customer to retry
+- `order.expired` — to clear abandoned-cart UI
+
+Add `order.disputed` and `dispute.resolved` only if you want your own UI to reflect dispute state.

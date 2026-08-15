@@ -1,0 +1,12 @@
+{
+  "index": "Introduction",
+  "quickstart": "Quickstart",
+  "concepts": "Concepts",
+  "api-reference": "API Reference",
+  "checkout": "Hosted Checkout",
+  "webhooks": "Webhooks",
+  "sdks": "SDKs",
+  "guides": "Guides",
+  "security": "Security",
+  "changelog": "Changelog"
+}

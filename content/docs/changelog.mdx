@@ -1,0 +1,60 @@
+---
+title: Changelog
+description: What changed, when, and what to do about it.
+---
+
+# Changelog
+
+All notable changes to the PyGate API and SDKs are documented here. Versions follow [Semantic Versioning](https://semver.org/).
+
+## 2026-08-13 — Public beta
+
+The first public release of PyGate. The API is stable but marked `v1beta` until we ship 1.0 later this year.
+
+### Added
+
+- `POST /api/v1/orders` — create an order, with a hosted payment URL
+- `GET /api/v1/orders/{orderId}` — retrieve an order and its payment
+- `POST /api/v1/verify` — verify a bank/telebirr reference
+- Webhook subscriptions for `payment.approved`, `payment.rejected`, `payment.processing`, `order.expired`, `order.disputed`, `dispute.resolved`
+- HMAC-SHA256 signed webhook deliveries with `X-PyGate-Delivery-Id` for idempotency
+- Hosted checkout page on `checkout.example.com` with project logo, brand color, and 5 languages
+- Test mode with 6 sandbox fixtures covering every order outcome
+- Official SDKs: Node.js (`@pygate/node`), Python (`pygate`), PHP (`pygate/pygate-php`), Go (`github.com/pygate/pygate-go`)
+- Disputes and support tickets from the checkout page
+- Self-service dashboard: projects, API keys, bank accounts, webhooks, audit log
+
+### Known limitations
+
+- No list endpoints (everything is single-resource; see [Pagination](/api-reference/pagination))
+- No refund endpoint (initiate transfer outside PyGate)
+- No merchant-return URLs (success/cancel) — rely on webhooks
+- No `USD` / `EUR` in live mode (test mode only)
+
+## Roadmap
+
+A peek at what's planned for the next two releases:
+
+### v1.5 (ETA Q4 2026)
+
+- `GET /api/v1/disputes` and `GET /api/v1/support-tickets`
+- `POST /api/v1/refunds` (requires your bank account integration)
+- Merchant success/cancel URLs on the checkout page
+- Webhook event versioning (`payment.approved.v2` alongside `payment.approved`)
+
+### v2.0 (ETA Q2 2027)
+
+- `GET /api/v2/orders` with cursor pagination
+- Multi-currency settlement accounts
+- Native subscriptions / recurring payments
+- Marketplace payouts (split payments to multiple merchants)
+
+## How to upgrade
+
+The API is stable. When breaking changes are required, they will be:
+
+1. Announced in this changelog at least 90 days before the change ships.
+2. Available under a new path (`/api/v2/…`) for at least 12 months after the change.
+3. Communicated by email to all API key holders.
+
+No breaking changes have been made since the public beta launch.

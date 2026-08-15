@@ -1,0 +1,65 @@
+---
+title: How it works
+description: The end-to-end receipt-based payment flow.
+---
+
+
+# How it works
+
+PyGate is built around the fact that bank and mobile-money transfers are **push** payments, not **pull**. The customer initiates the transfer from their own app, and the receipt is the only ground truth.
+
+## The flow
+
+```
+1. YOUR SERVER                       PYGATE                       CUSTOMER
+   ─────────────                       ──────                       ───────
+   POST /api/v1/orders
+   ─────────────────────────────────►
+                                       creates order
+                                       returns paymentUrl
+   ◄─────────────────────────────────
+   redirect customer to paymentUrl
+   ────────────────────────────────────────────────────────────────►
+                                                                   sees hosted page
+                                                                   chooses bank / telebirr
+                                                                   pays from their app
+                                                                   photographs receipt
+                                                                   uploads receipt
+                                                                   ◄──────────────────────
+                                       receives receipt
+                                       runs OCR + smart verify
+                                       (re-checks with issuing bank)
+                                       ─────►
+                                       APPROVED | REJECTED
+   webhook: payment.approved  ◄──────
+   (or: poll GET /api/v1/orders/[id])
+```
+
+## Three objects
+
+| Object | Lifetime | Holds |
+|---|---|---|
+| **Order** | Created by your `POST /api/v1/orders`, expires per `expiresInSeconds` | Amount, description, currency, status (`PENDING` → `PAID` / `EXPIRED` / `REJECTED`) |
+| **Payment** | Created when the customer uploads a receipt | Receipt image (in R2), extracted data, status (`PENDING` → `APPROVED` / `REJECTED`), approval timestamp |
+| **WebhookDelivery** | Created when an event is fanned out | URL, payload, HMAC signature, attempt count, last error |
+
+An order has at most one payment. A payment has at most one approval. The whole thing is a finite state machine — every transition has a row in the database and (usually) a webhook.
+
+## Verification
+
+When a receipt is uploaded PyGate runs it through two stages:
+
+1. **OCR** — `tesseract.js` extracts text from the image. For PDFs, `pdf-parse` does the same.
+2. **Smart verify** — the extracted fields (amount, payer account, reference, date) are matched against the issuing bank. If the bank's API is reachable, the receipt is reconciled against the actual transaction record.
+
+OCR alone is insufficient: a photoshopped receipt will pass OCR. The bank's API is the source of truth. If the bank is unreachable, PyGate falls back to the receipt and flags the payment for manual review (visible in the dashboard, but not auto-approved).
+
+## Settlement
+
+PyGate doesn't hold your money. Every payment is settled directly to your bank account by the issuing bank per their normal schedule. PyGate charges a per-transaction fee on the dashboard's invoice, separately.
+
+## What PyGate does NOT do
+
+- It does not store card numbers. There are no cards.
+- It does not initiate transfers on behalf of the customer. The customer must push.
+- It does not act as a money transmitter. It is a software service that orchestrates receipt verification.

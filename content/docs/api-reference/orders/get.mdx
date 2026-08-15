@@ -1,0 +1,114 @@
+---
+title: Retrieve order
+description: Get the current status of an order and its payment.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Retrieve an order
+
+<Endpoint method="GET" path="/api/v1/orders/{orderId}" auth="x-api-key" />
+
+Returns the current status of an order, including its payment (if any) and the extracted data from the receipt.
+
+## Path parameters
+
+<Params>
+  <Param name="orderId" type="string" required>
+    The order ID returned by [Create order](/api-reference/orders/create). Example: `ord_3x4mpl3t3st0rd3r1d2`.
+  </Param>
+</Params>
+
+## Example
+
+<Tabs items={["cURL", "Node", "Python", "PHP", "Go"]}>
+  <Tab value="cURL">
+    ```bash
+    curl https://dashboard.example.com/api/v1/orders/ord_3x4mpl3t3st0rd3r1d2 \
+      -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+    ```
+  </Tab>
+  <Tab value="Node">
+    ```ts
+    import { getOrder } from "@pygate/node";
+
+    const order = await getOrder({
+      apiKey: process.env.PYGATE_API_KEY,
+      orderId: "ord_3x4mpl3t3st0rd3r1d2",
+    });
+
+    console.log(order.status); // "PENDING" | "PAID" | "EXPIRED" | "REJECTED"
+    ```
+  </Tab>
+  <Tab value="Python">
+    ```python
+    order = client.orders.get("ord_3x4mpl3t3st0rd3r1d2")
+    print(order.status)
+    ```
+  </Tab>
+  <Tab value="PHP">
+    ```php
+    <?php
+    $order = $client->orders->get("ord_3x4mpl3t3st0rd3r1d2");
+    echo $order->status;
+    ```
+  </Tab>
+  <Tab value="Go">
+    ```go
+    order, err := client.Orders.Get(ctx, "ord_3x4mpl3t3st0rd3r1d2")
+    ```
+  </Tab>
+</Tabs>
+
+## Responses
+
+<Response status="200" body={{
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  status: "PAID",
+  amount: 250,
+  currency: "ETB",
+  description: "Test order",
+  expiresAt: "2026-08-13T15:30:00.000Z",
+  payment: {
+    status: "APPROVED",
+    submittedAt: "2026-08-13T15:25:12.000Z",
+    approvedAt: "2026-08-13T15:26:48.000Z",
+    extractedData: {
+      amount: 250,
+      currency: "ETB",
+      payerName: "Abel Tadesse",
+      payerAccount: "1000123456789",
+      receiverName: "Demo Merchant",
+      receiverAccount: "1000987654321",
+      receiverBank: "CBE",
+      referenceId: "TXN9X9K7M",
+      paymentDate: "2026-08-13T15:24:50.000Z",
+      transactionType: "INTERNAL_TRANSFER",
+      paymentMode: "MOBILE_BANKING",
+      paymentReason: "Payment for Test order",
+      extractionMethod: "API"
+    }
+  }
+}} description="Returns the order and its payment, if any. If a `PENDING` order is past its `expiresAt`, it is auto-transitioned to `EXPIRED` and the response reflects that without a separate call." />
+
+<Response status="404" body={{ error: "Order not found" }} description="The orderId does not exist, or it exists but was created by a different API key." />
+
+## Polling
+
+This endpoint is the simplest way to poll for status. Suggested pattern:
+
+```js
+async function pollUntilTerminal(orderId, intervalMs = 2000) {
+  while (true) {
+    const order = await getOrder({ apiKey: API_KEY, orderId });
+    if (order.status !== "PENDING") return order;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+}
+```
+
+For production traffic, prefer [webhooks](/webhooks/overview) over polling — every status transition triggers a webhook event, so you don't need to budget the polling requests.
+
+<Callout type="info">
+  The `extractedData` object is included only when the payment reaches `APPROVED`. While the payment is in `PENDING` or `PROCESSING`, the `payment` object is `null` or missing the field.
+</Callout>

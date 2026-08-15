@@ -1,0 +1,115 @@
+---
+title: Node.js SDK
+description: Install and use the official PyGate SDK for Node.js.
+---
+
+
+# Node.js SDK
+
+The official PyGate SDK for Node.js is [`@pygate/node`](https://www.npmjs.com/package/@pygate/node). It targets Node 18+ and ships with TypeScript types.
+
+## Install
+
+```bash
+npm install @pygate/node
+```
+
+## Initialize
+
+```ts
+import { Pygate } from "@pygate/node";
+
+const pygate = new Pygate({
+  apiKey: process.env.PYGATE_API_KEY!,
+  // Optional. Defaults to https://dashboard.example.com
+  baseUrl: process.env.PYGATE_BASE_URL,
+});
+```
+
+## Create an order
+
+```ts
+const order = await pygate.orders.create({
+  amount: 250,
+  description: "Test order",
+  currency: "ETB",
+  // Optional
+  expiresInSeconds: 600,
+  items: [{ name: "Widget", quantity: 1, amount: 250, amountMinor: 25000 }],
+  metadata: { internalId: "123" },
+});
+
+console.log(order.paymentUrl);
+```
+
+## Retrieve an order
+
+```ts
+const order = await pygate.orders.get(orderId);
+
+console.log(order.status); // "PENDING" | "PAID" | "EXPIRED" | "REJECTED"
+```
+
+## Verify a reference
+
+```ts
+const result = await pygate.verify({
+  reference: "TXN9X9K7M",
+  suffix: "250",
+});
+
+if (result.ok) {
+  console.log(result.data.amount);
+} else {
+  console.error(result.error);
+}
+```
+
+## Webhook verification
+
+A separate package, `@pygate/webhooks`, provides signature verification helpers:
+
+```ts
+import { verifyWebhook } from "@pygate/webhooks";
+
+app.post("/webhooks/pygate", async (req, res) => {
+  const raw = await streamToString(req);
+  const ok = verifyWebhook({
+    payload: raw,
+    signature: req.headers["x-pygate-signature"],
+    timestamp: req.headers["x-pygate-timestamp"],
+    secret: process.env.PYGATE_WEBHOOK_SECRET!,
+    tolerance: 5 * 60,
+  });
+
+  if (!ok) return res.status(401).send("bad signature");
+
+  // Idempotency dedupe on req.headers["x-pygate-delivery-id"]
+  // ...
+  res.status(200).send("ok");
+});
+```
+
+## Error handling
+
+All thrown errors extend `PygateError`:
+
+```ts
+import { PygateError, PygateRateLimitError } from "@pygate/node";
+
+try {
+  await pygate.orders.create({ ... });
+} catch (err) {
+  if (err instanceof PygateRateLimitError) {
+    console.error("Rate limited; retry after", err.retryAfterSeconds);
+  } else if (err instanceof PygateError) {
+    console.error("PyGate error", err.statusCode, err.message);
+  } else {
+    throw err;
+  }
+}
+```
+
+<Callout type="info">
+  The SDK is open-source on [GitHub](https://github.com/pygate/pygate-node). Issues and PRs welcome.
+</Callout>

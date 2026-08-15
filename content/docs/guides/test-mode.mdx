@@ -1,0 +1,56 @@
+---
+title: Test mode
+description: Sandbox fixtures, test bank accounts, and how to simulate every payment outcome.
+---
+
+
+# Test mode
+
+Every project in PyGate has a **test mode** flag. Test mode projects use `pgk_test_` API keys and a separate dataset — no real money ever moves, and the hosted checkout shows a "Simulate payment" widget instead of a real bank account picker.
+
+## Switching modes
+
+Toggle test mode in Project → Settings → Environment. The dashboard shows a yellow bar in test mode to prevent confusion.
+
+## Sandbox fixtures
+
+The hosted checkout page in test mode gives you a dropdown of fixtures:
+
+| Fixture | Order status | Payment status | Receipt amount |
+|---|---|---|---|
+| **Approved — matches order** | `PAID` | `APPROVED` | Exactly the order amount |
+| **Approved — pays in USD** | `PAID` | `APPROVED` | Order amount, but currency USD |
+| **Rejected — amount mismatch** | `REJECTED` | `REJECTED` | 10% less than the order amount |
+| **Rejected — unreadable** | `REJECTED` | `REJECTED` | Random image, no OCR data |
+| **Processing — bank unreachable** | `PENDING` | `MANUAL_REVIEW` | Order amount, but the bank API is mocked to time out |
+| **Expired** | `EXPIRED` | — | The order times out before any receipt is uploaded |
+
+Each fixture presents a realistic-looking receipt generated locally — no real banking API is contacted.
+
+## Test bank accounts
+
+In test mode, the bank account list is replaced with a single synthetic account. Configuring real bank accounts is still required (so the project structure matches production), but the values are ignored.
+
+To test a multi-bank scenario, create one project per bank account you want to exercise and switch between them.
+
+## API behavior in test mode
+
+The public API behaves identically. The same `POST /api/v1/orders` works in both modes, the same webhooks fire, the same signatures are issued. The only difference is the data behind the curtain.
+
+This is intentional: you should be able to test your entire integration without modifying any code when you switch to live.
+
+## Promoting to live
+
+When you're ready:
+
+1. Toggle the project to **Live** in settings.
+2. The dashboard generates a new `pgk_live_` API key. The old `pgk_test_` key keeps working.
+3. Add your real bank accounts.
+4. Update your environment variable to the live key.
+5. Re-verify your webhook endpoint.
+
+Nothing else changes. Same code, same flow, same data shapes.
+
+<Callout type="warn">
+  Stop using `pgk_test_` keys in production. The dashboard will yell at you, but the API will silently accept them. Run a smoke test in live mode before turning on real traffic.
+</Callout>

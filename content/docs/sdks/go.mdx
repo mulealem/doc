@@ -1,0 +1,133 @@
+---
+title: Go SDK
+description: Install and use the official PyGate SDK for Go.
+---
+
+
+# Go SDK
+
+The official PyGate SDK for Go is [`github.com/pygate/pygate-go`](https://pkg.go.dev/github.com/pygate/pygate-go). It targets Go 1.21+ and exposes typed structs for every response.
+
+## Install
+
+```bash
+go get github.com/pygate/pygate-go
+```
+
+## Initialize
+
+```go
+package main
+
+import (
+    "context"
+    "os"
+
+    "github.com/pygate/pygate-go"
+)
+
+func main() {
+    client := pygate.New(os.Getenv("PYGATE_API_KEY"))
+    _ = client
+}
+```
+
+## Create an order
+
+```go
+order, err := client.Orders.Create(context.Background(), pygate.OrderCreateParams{
+    Amount:             250,
+    Description:        "Test order",
+    Currency:           "ETB",
+    ExpiresInSeconds:   pygate.Int(600),
+    Metadata:           map[string]any{"internalId": "123"},
+})
+if err != nil {
+    panic(err)
+}
+
+fmt.Println(order.PaymentURL)
+```
+
+## Retrieve an order
+
+```go
+order, err := client.Orders.Get(context.Background(), "ord_3x4mpl3t3st0rd3r1d2")
+if err != nil {
+    panic(err)
+}
+fmt.Println(order.Status) // "PENDING" | "PAID" | "EXPIRED" | "REJECTED"
+```
+
+## Verify a reference
+
+```go
+result, err := client.Verify(context.Background(), pygate.VerifyParams{
+    Reference: "TXN9X9K7M",
+    Suffix:    "250",
+})
+if err != nil {
+    panic(err)
+}
+
+if result.OK {
+    fmt.Println(result.Data.Amount)
+}
+```
+
+## Webhook verification
+
+```go
+import (
+    "github.com/pygate/pygate-go/webhooks"
+)
+
+http.HandleFunc("/webhooks/pygate", func(w http.ResponseWriter, r *http.Request) {
+    body, _ := io.ReadAll(r.Body)
+
+    ok := webhooks.Verify(webhooks.VerifyParams{
+        Payload:   body,
+        Signature: r.Header.Get("X-PyGate-Signature"),
+        Timestamp: r.Header.Get("X-PyGate-Timestamp"),
+        Secret:    os.Getenv("PYGATE_WEBHOOK_SECRET"),
+        Tolerance: 5 * time.Minute,
+    })
+    if !ok {
+        http.Error(w, "bad signature", http.StatusUnauthorized)
+        return
+    }
+
+    deliveryID := r.Header.Get("X-PyGate-Delivery-Id")
+    // Idempotency dedupe on deliveryID
+    // ...
+    w.WriteHeader(http.StatusOK)
+})
+```
+
+## Error handling
+
+```go
+import (
+    "errors"
+    "github.com/pygate/pygate-go"
+)
+
+_, err := client.Orders.Create(ctx, params)
+if err != nil {
+    var rateLimit *pygate.RateLimitError
+    if errors.As(err, &rateLimit) {
+        log.Printf("rate limited; retry after %ds", rateLimit.RetryAfterSeconds)
+        return
+    }
+    var pgErr *pygate.Error
+    if errors.As(err, &pgErr) {
+        log.Printf("PyGate error %d: %s", pgErr.StatusCode, pgErr.Message)
+        return
+    }
+    panic(err)
+}
+```
+
+<Callout type="info">
+  The SDK is open-source on [GitHub](https://github.com/pygate/pygate-go). Issues and PRs welcome.
+</Callout>

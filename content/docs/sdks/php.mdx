@@ -1,0 +1,120 @@
+---
+title: PHP SDK
+description: Install and use the official PyGate SDK for PHP.
+---
+
+
+# PHP SDK
+
+The official PyGate SDK for PHP is [`pygate/pygate-php`](https://packagist.org/packages/pygate/pygate-php). It targets PHP 8.1+ and ships with first-class Laravel support.
+
+## Install
+
+```bash
+composer require pygate/pygate-php
+```
+
+## Initialize
+
+```php
+<?php
+use Pygate\Pygate;
+
+$client = new Pygate(getenv("PYGATE_API_KEY"));
+```
+
+## Create an order
+
+```php
+$order = $client->orders->create([
+    "amount" => 250,
+    "description" => "Test order",
+    "currency" => "ETB",
+    "expiresInSeconds" => 600,
+    "metadata" => ["internalId" => "123"],
+]);
+
+echo $order->paymentUrl;
+```
+
+## Retrieve an order
+
+```php
+$order = $client->orders->get("ord_3x4mpl3t3st0rd3r1d2");
+echo $order->status;
+```
+
+## Verify a reference
+
+```php
+$result = $client->verify([
+    "reference" => "TXN9X9K7M",
+    "suffix" => "250",
+]);
+
+if ($result->ok) {
+    echo $result->data->amount;
+}
+```
+
+## Webhook verification
+
+```php
+use Pygate\Webhooks;
+
+$ok = Webhooks::verify([
+    "payload" => $request->getContent(),  // raw body
+    "signature" => $request->header("X-PyGate-Signature"),
+    "timestamp" => $request->header("X-PyGate-Timestamp"),
+    "secret" => getenv("PYGATE_WEBHOOK_SECRET"),
+    "tolerance" => 300,  // seconds
+]);
+
+if (!$ok) {
+    return response("bad signature", 401);
+}
+
+$deliveryId = $request->header("X-PyGate-Delivery-Id");
+// Idempotency dedupe on $deliveryId
+```
+
+## Laravel
+
+```php
+// config/services.php
+"pygate" => [
+    "api_key" => env("PYGATE_API_KEY"),
+],
+
+// In a controller
+use Pygate\Laravel\Facades\Pygate;
+
+public function store(Request $request) {
+    $order = Pygate::orders()->create([
+        "amount" => 100,
+        "description" => $request->input("name"),
+        "currency" => "ETB",
+    ]);
+
+    return redirect($order->paymentUrl);
+}
+```
+
+## Error handling
+
+```php
+use Pygate\Exceptions\PygateException;
+use Pygate\Exceptions\RateLimitException;
+
+try {
+    $order = $client->orders->create([...]);
+} catch (RateLimitException $e) {
+    $retryAfter = $e->retryAfterSeconds();
+} catch (PygateException $e) {
+    Log::error("PyGate error " . $e->getCode(), ["msg" => $e->getMessage()]);
+}
+```
+
+<Callout type="info">
+  The SDK is open-source on [GitHub](https://github.com/pygate/pygate-php). Issues and PRs welcome.
+</Callout>

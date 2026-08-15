@@ -1,0 +1,55 @@
+---
+title: Customization
+description: Theming, languages, and the receipt widget.
+---
+
+# Customizing the checkout page
+
+PyGate's hosted checkout page is intentionally minimal. You can change visual identity and language, but the layout and content are not scriptable — every customer sees the same form, which is part of the trust story.
+
+## Logo
+
+Upload a PNG or SVG up to **500 KB** from Project → Settings → Logo. The logo appears at the top of every page on the checkout origin. A dark variant can be uploaded for dark mode.
+
+| Property | Recommended |
+|---|---|
+| Format | PNG with transparency, or SVG |
+| Width | 256–512 px |
+| Height | 64–128 px |
+| Background | Transparent (white-on-dark and dark-on-white variants are auto-generated) |
+
+## Brand color
+
+From Project → Settings → Brand, set a single accent color. It's used for:
+
+- The "Pay" button background
+- Active form field borders
+- The progress indicator dots
+
+We don't expose a full theme — sticking to a single accent keeps the page feeling like ours, not yours.
+
+## Languages
+
+The customer's browser language is auto-detected. You can force a language via the `?lang=` query param:
+
+| Code | Language |
+|---|---|
+| `en` | English |
+| `am` | Amharic (አማርኛ) |
+| `om` | Afaan Oromoo |
+| `so` | Somali |
+| `ti` | Tigrinya (ትግርኛ) |
+
+If you want to add a language, email `support@pygate.local` with the translations and we'll roll it into the next release.
+
+## Bank account ordering
+
+The page lists your enabled bank accounts in the order you drag them to in the dashboard. Most merchants put their primary settlement account first.
+
+## What you cannot customize
+
+- The layout and order of form fields
+- The "Upload receipt" widget UX
+- The fields extracted from the receipt (these are defined by the issuing bank)
+
+This is by design. Consistency across merchants is what makes customers trust the page enough to upload sensitive financial information.

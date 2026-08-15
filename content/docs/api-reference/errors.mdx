@@ -1,0 +1,77 @@
+---
+title: Errors
+description: HTTP status codes, error envelope, and the retry behavior to expect.
+---
+
+# Errors
+
+The PyGate API uses conventional HTTP status codes. Every error response has a JSON body of the shape:
+
+```json
+{ "error": "Human-readable message" }
+```
+
+Some endpoints add extra fields (e.g. `verify` includes `provider` and `status`). All errors are logged server-side with a request ID you can quote when contacting support.
+
+## Status codes
+
+| Code | Meaning | When |
+|---|---|---|
+| `200` | OK | The request succeeded. |
+| `400` | Bad Request | The body was malformed or a required field was missing/invalid. Fix and retry. |
+| `401` | Unauthorized | Missing or invalid `x-api-key`. |
+| `404` | Not Found | The orderId doesn't exist (or belongs to a different project). |
+| `429` | Too Many Requests | You hit the per-IP rate limit. Honor `Retry-After`. |
+| `500` | Server Error | PyGate broke. Retry with backoff, but open a ticket if it persists. |
+| `502` | Bad Gateway | An upstream bank API failed on the `verify` endpoint. |
+
+## Authentication errors
+
+`401` is the only error you should ever see for a missing or bad API key:
+
+```json
+{ "error": "Missing x-api-key header" }   // header absent
+{ "error": "Invalid API key" }            // header present but unknown
+```
+
+There is no "expired" or "revoked" status — keys are valid until deleted.
+
+## Validation errors
+
+`400` errors are always actionable. Read the `error` string for the missing or invalid field:
+
+```json
+{ "error": "amount must be a positive number" }
+{ "error": "description is required" }
+{ "error": "amount is not representable as a currency value" }
+{ "error": "expiresInSeconds must be between 60 and 86400" }
+{ "error": "No bank account is enabled for this project" }
+```
+
+## Rate-limit errors
+
+`429` includes a `Retry-After` header:
+
+```http
+HTTP/1.1 429 Too Many Requests
+retry-after: 17
+```
+
+Always read this header. Don't retry faster than it tells you.
+
+## Network errors
+
+PyGate retries internally on its own transient failures, so a `5xx` from our side is rare. If you get one:
+
+- Don't retry immediately — use exponential backoff with jitter.
+- Cap your retries at 3 over 30 seconds.
+- If the error persists, log the request body (minus the API key) and open a ticket.
+
+## Support
+
+Email `support@pygate.local` with:
+
+- The endpoint and HTTP method
+- The request body (redact the API key)
+- The full response, including headers
+- The request ID from the `x-request-id` response header (if present)

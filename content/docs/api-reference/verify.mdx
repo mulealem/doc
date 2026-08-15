@@ -1,0 +1,127 @@
+---
+title: Verify reference
+description: Verify a bank or telebirr reference against the issuing bank.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Verify a reference
+
+<Endpoint method="POST" path="/api/v1/verify" auth="x-api-key" />
+
+Looks up a transaction reference (a telebirr reference, a bank-statement row, etc.) directly against the issuing bank. Useful when you want to confirm a payment outside of the upload flow — for example, reconciling a reports file from your finance team.
+
+## Request body
+
+<Params>
+  <Param name="reference" type="string" required>
+    The transaction reference. For telebirr, this is the 10-character code printed on the receipt (e.g. `TXN9X9K7M`).
+  </Param>
+  <Param name="suffix" type="string">
+    Required for some telebirr references. The amount suffix embedded in the reference (e.g. `250` for a 250 ETB payment).
+  </Param>
+  <Param name="phoneNumber" type="string">
+    Optional payer phone number. Tightens the match for telebirr/CBE Birr transactions.
+  </Param>
+</Params>
+
+## Example
+
+<Tabs items={["cURL", "Node", "Python", "PHP", "Go"]}>
+  <Tab value="cURL">
+    ```bash
+    curl -X POST https://dashboard.example.com/api/v1/verify \
+      -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+      -H "content-type: application/json" \
+      -d '{ "reference": "TXN9X9K7M", "suffix": "250" }'
+    ```
+  </Tab>
+  <Tab value="Node">
+    ```ts
+    import { verify } from "@pygate/node";
+
+    const result = await verify({
+      apiKey: process.env.PYGATE_API_KEY,
+      reference: "TXN9X9K7M",
+      suffix: "250",
+    });
+
+    if (result.ok) {
+      console.log(result.data.amount); // 250
+    }
+    ```
+  </Tab>
+  <Tab value="Python">
+    ```python
+    result = client.verify(reference="TXN9X9K7M", suffix="250")
+    if result.ok:
+        print(result.data.amount)
+    ```
+  </Tab>
+  <Tab value="PHP">
+    ```php
+    <?php
+    $result = $client->verify([
+        "reference" => "TXN9X9K7M",
+        "suffix" => "250",
+    ]);
+    if ($result->ok) {
+        echo $result->data->amount;
+    }
+    ```
+  </Tab>
+  <Tab value="Go">
+    ```go
+    result, err := client.Verify(ctx, pygate.VerifyParams{
+        Reference: "TXN9X9K7M",
+        Suffix:    "250",
+    })
+    ```
+  </Tab>
+</Tabs>
+
+## Responses
+
+<Response status="200" body={{
+  ok: true,
+  provider: "telebirr",
+  data: {
+    referenceId: "TXN9X9K7M",
+    amount: 250,
+    currency: "ETB",
+    paymentDate: "2026-08-13T15:24:50.000Z",
+    payerName: "Abel Tadesse",
+    payerAccount: "1000123456789",
+    payerPhone: "+251911000000",
+    receiverName: "Demo Merchant",
+    receiverAccount: "1000987654321",
+    receiverBank: "CBE",
+    serviceFee: 0,
+    vat: 0,
+    totalPaid: 250,
+    transactionType: "INTERNAL_TRANSFER",
+    paymentMode: "MOBILE_BANKING",
+    paymentReason: "Payment for Test order",
+    paymentChannel: "MOBILE",
+    narrative: "Sent 250 ETB to Demo Merchant",
+    extractionMethod: "API"
+  }
+}} description="The reference was found and verified. The `data` shape varies slightly per provider (telebirr, CBE, etc.) — see the schema reference for the full union." />
+
+<Response status="404" body={{
+  ok: false,
+  provider: "telebirr",
+  status: 404,
+  error: "Reference not found"
+}} description="The reference could not be located at the issuing bank. It may be invalid, expired, or outside the bank's lookup window." />
+
+<Response status="502" body={{
+  ok: false,
+  provider: "telebirr",
+  status: 502,
+  error: "Upstream bank unreachable"
+}} description="The bank API returned an error or timed out. Retry with exponential backoff." />
+
+<Callout type="warn">
+  The `verify` endpoint is rate-limited at 60 req/min/IP. If you need to reconcile many references in batch, write them to a CSV and email it to `support@pygate.local` — we'll run a bulk job for free.
+</Callout>
