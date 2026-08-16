@@ -26,6 +26,11 @@ That is the entire config — no env vars required if you keep the
 defaults in `doc/.env.example`. If you want to override the public URLs
 that show up in the docs:
 
+> **Peer-deps note:** `doc/.npmrc` sets `legacy-peer-deps=true` because
+> `fumadocs-core@15` declares `peerOptional next@"14.x.x || 15.x.x"` while
+> this project pins Next 16 (works fine in practice). Without the flag,
+> fresh `npm install`s fail with ERESOLVE — including the Docker build.
+
 | Variable | Value |
 |---|---|
 | `NEXT_PUBLIC_DASHBOARD_URL` | `https://dashboard.payment.et` |
