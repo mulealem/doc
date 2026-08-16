@@ -37,15 +37,14 @@ runtime env panel — `NEXT_PUBLIC_*` is baked at build time).
 ## Alternative: containerised (kept for parity)
 
 If you must deploy via the **Application** resource type, this folder
-also contains a Dockerfile that builds and runs the same Next.js
-standalone server on port 3003. The Dockerfile is otherwise identical
-to the marketing/checkout pattern; Coolify config would be:
+also contains a Dockerfile that builds the same static export (`out/`)
+and serves it with nginx on port 8080. Coolify config would be:
 
 | Field | Value |
 |---|---|
 | Resource type | **Application** (Public) |
 | **Build Path** | `/doc` |
-| **Port** | `3003` |
+| **Port** | `8080` |
 | **Healthcheck path** | `/` |
 | **Domain** | `docs.payment.et` |
 
