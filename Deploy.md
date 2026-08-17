@@ -101,6 +101,20 @@ is fine. The cause is always one of these — check in order:
    `docker logs coolify-proxy` on the host). Search for
    `docs.payment.et` — the upstream address Caddy is trying and the
    error reason are both there.
+5. **The build log shows a malformed `COOLIFY_URL` line**, e.g.
+
+   ```
+   COOLIFY_URL=https://docs.payment.et,https//docs.shewapost.com
+   COOLIFY_FQDN=docs.payment.et,https
+   ```
+
+   The second entry is missing its colon (`https//` instead of
+   `https://`). This is a stale / corrupted entry in the resource's
+   **Domains** tab — Coolify joins every attached domain into
+   `COOLIFY_URL` and `COOLIFY_FQDN` and renders invalid Caddy labels
+   from any malformed entry, which makes the whole vhost fail. Open
+   the resource → **Domains** → remove the malformed entry (keep only
+   `docs.payment.et`) → **Redeploy**.
 
 ### Quick on-host checks
 
