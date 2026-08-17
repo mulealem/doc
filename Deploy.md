@@ -10,7 +10,19 @@ Next.js 16. The build emits a fully static export to `doc/out/`.
 ## Recommended: Coolify **Static Site** resource (no container)
 
 This is the lightest deployment. Coolify runs `npm run build` and serves
-the resulting `out/` directory directly — no Node runtime, no nginx.
+the resulting `out/` directory directly — no Node runtime, no nginx,
+no container, no compose layer.
+
+> **If you ever created this resource as an Application instead of a
+> Static Site** (because the docs above are easy to skim past), the
+> Application path runs `docker compose up` which injects Coolify's
+> `COOLIFY_URL` / `COOLIFY_FQDN` env into the container — and any
+> malformed entry in the Domains tab (missing `:` after `https`, stray
+> port, etc.) will produce invalid Caddy labels and a 502 on the whole
+> vhost, even when the container, healthcheck, and nginx upstream are
+> all green. **If you're on the Application route and seeing 502 with a
+> healthy build, convert to a Static Site** — see "Convert an existing
+> Application to a Static Site" below.
 
 | Field | Value |
 |---|---|
@@ -132,6 +144,47 @@ curl -sS -I --max-time 10 https://docs.payment.et
 curl -sSI --max-time 10 https://docs.payment.et | grep -i server
 # → expect: Server: Caddy
 ```
+
+## Convert an existing Application to a Static Site
+
+If the doc resource was originally created as an **Application** (it
+uses `doc/Dockerfile` / `doc/docker-compose.yml`, runs an nginx
+container on port 8080, and the build log shows `docker compose … up
+--build`) and you want the lighter, more robust Static Site route:
+
+1. **Open the existing Application** and note down:
+   - Git repo URL and branch.
+   - Any Build Arguments you set
+     (`NEXT_PUBLIC_DASHBOARD_URL`, `NEXT_PUBLIC_CHECKOUT_URL`, …).
+   - Attached domain(s).
+2. **Delete the Application resource.** This removes the
+   `pygate-docs` / `hbh6udmnajikkabvq27ooa9v-*` containers and any
+   corrupted domain entries that were injecting malformed `COOLIFY_URL`
+   values.
+3. **Add Resource → Static Site** with:
+
+   | Field | Value |
+   |---|---|
+   | Resource type | **Static Site** |
+   | Git repo | the same repo as the Application |
+   | Branch | `main` |
+   | **Base Directory** | `/doc` |
+   | **Build Command** | `npm install && npm run build` |
+   | **Publish Directory** | `out` |
+   | **Node version** | 22 |
+   | **Domain** | `docs.payment.et` |
+   | **Build Arguments** | `NEXT_PUBLIC_DASHBOARD_URL`, `NEXT_PUBLIC_CHECKOUT_URL` (paste the same values you saved) |
+
+4. **Deploy.** Coolify will run `npm install && npm run build` (the same
+   command the Dockerfile's builder stage runs) and serve `out/`
+   directly — no container, no compose, no `COOLIFY_URL` injection.
+5. Verify: `curl -sS -I --max-time 10 https://docs.payment.et/` →
+   `HTTP/1.1 200 OK` with a real HTML body.
+
+> The repo's `doc/Dockerfile` and `doc/docker-compose.yml` are kept for
+> parity / fallback only and are no longer used once you're on a Static
+> Site. You can leave them in the repo untouched; deleting them is
+> optional cleanup.
 
 ## Roll-forward
 
