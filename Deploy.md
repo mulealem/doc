@@ -9,9 +9,41 @@ Next.js 16. The build emits a fully static export to `doc/out/`.
 
 ## Recommended: Coolify **Static Site** resource (no container)
 
-This is the lightest deployment. Coolify runs `npm run build` and serves
-the resulting `out/` directory directly — no Node runtime, no nginx,
-no container, no compose layer.
+This is the lightest deployment. Coolify runs the install + build
+step and serves the resulting `out/` directory directly — no Node
+runtime, no nginx, no container, no compose layer.
+
+### Where the fields live in Coolify v4
+
+When you click **+ New → Static Site**, the form has several tabs.
+You'll use the **General** tab.
+
+| UI field (General tab) | Value |
+|---|---|
+| Resource type | **Static Site** |
+| Git Repository | `https://github.com/mulealem/doc.git` |
+| Git Branch | `main` |
+| **Install Command** | `npm install` |
+| **Build Command** | `npm run build` |
+| **Publish Directory** | `out` |
+| **Port** | leave blank (Static Sites don't expose a port) |
+| **Domain** | `docs.payment.et` (in the **Domains** tab, not General) |
+| Build Arguments | recommended: see "Build Arguments" below |
+
+If your Coolify build is older and the form only shows Git
+Repository / Branch / **Publish Directory** (no Build Command
+field), see "Older Coolify versions" below — Coolify will auto-detect
+`npm run build` from `package.json` in that case.
+
+**Base Directory / Build Path:** the Static Site form does not have
+this field in v4 — it always builds from the repo root. If you see
+one anyway, set it to `/doc` (Fumadocs lives in the `doc/` sub-folder
+of this monorepo).
+
+> Don't see "Install Command" and "Build Command" in v4? Make sure
+> you're on a recent Coolify v4.x — older versions hid those fields.
+> The "publish directory = `out`" is the only thing those versions
+> let you configure; everything else is inferred.
 
 > **If you ever created this resource as an Application instead of a
 > Static Site** (because the docs above are easy to skim past), the
@@ -27,11 +59,13 @@ no container, no compose layer.
 | Field | Value |
 |---|---|
 | Resource type | **Static Site** |
-| Git repo | this monorepo |
-| **Base Directory** | `/doc` |
-| **Build Command** | `npm install && npm run build` |
+| Git repo | `https://github.com/mulealem/doc.git` |
+| Git Branch | `main` |
+| **Install Command** | `npm install` |
+| **Build Command** | `npm run build` |
 | **Publish Directory** | `out` |
-| **Node version** | 22 |
+| **Base Directory** (if shown) | `/doc` |
+| **Port** | leave blank |
 | **Domain** | `docs.payment.et` |
 
 That is the entire config — no env vars required if you keep the
@@ -166,12 +200,12 @@ container on port 8080, and the build log shows `docker compose … up
    | Field | Value |
    |---|---|
    | Resource type | **Static Site** |
-   | Git repo | the same repo as the Application |
+   | Git repo | `https://github.com/mulealem/doc.git` |
    | Branch | `main` |
-   | **Base Directory** | `/doc` |
-   | **Build Command** | `npm install && npm run build` |
+   | **Install Command** | `npm install` |
+   | **Build Command** | `npm run build` |
    | **Publish Directory** | `out` |
-   | **Node version** | 22 |
+   | **Base Directory** (if shown) | `/doc` |
    | **Domain** | `docs.payment.et` |
    | **Build Arguments** | `NEXT_PUBLIC_DASHBOARD_URL`, `NEXT_PUBLIC_CHECKOUT_URL` (paste the same values you saved) |
 
