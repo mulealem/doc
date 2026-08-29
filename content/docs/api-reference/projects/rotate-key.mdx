@@ -1,0 +1,32 @@
+---
+title: Rotate API key
+description: Regenerate a project's API key.
+---
+
+import { Endpoint, Response } from "@/components";
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Rotate the project API key
+
+Regenerates a project's `pgk_…` key. The old key stops working immediately; the new key is returned **once**.
+
+- Admin tier: <Endpoint method="POST" path="/api/v1/admin/projects/{projectId}/api-key" auth="Authorization: Bearer" />
+- Project tier: <Endpoint method="POST" path="/api/v1/projects/me/api-key" auth="x-api-key" />
+
+```bash
+curl -X POST https://dashboard.example.com/api/v1/projects/me/api-key \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+```
+
+## Responses
+
+<Response status="200" body={{
+  apiKey: "pgk_a1b2c3d4e5f60718293a4b5c6d7e8f90"
+}} />
+
+<Response status="401" body={{ error: "Invalid API key" }} />
+<Response status="429" body={{ error: "Too many requests. Try again shortly." }} />
+
+<Callout type="warn">
+  Rotation invalidates the current key everywhere — orders API, verify API, and project management. Update your merchant's integration atomically.
+</Callout>

@@ -1,0 +1,29 @@
+---
+title: Delete project
+description: Permanently delete a project (admin tier).
+---
+
+import { Endpoint, Response } from "@/components";
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Delete a project
+
+<Endpoint method="DELETE" path="/api/v1/admin/projects/{projectId}" auth="Authorization: Bearer" />
+
+Permanently deletes a project and everything under it — orders, payments, bank accounts, webhooks, invoices, and team memberships are cascaded. Only the admin tier can delete projects.
+
+```bash
+curl -X DELETE https://dashboard.example.com/api/v1/admin/projects/prj_3x4mpl3t3st0rd3r1d2 \
+  -H "Authorization: Bearer pka_test_4b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r"
+```
+
+## Responses
+
+<Response status="200" body={{ ok: true }} />
+
+<Response status="401" body={{ error: "Invalid API key" }} />
+<Response status="404" body={{ error: "Project not found" }} />
+
+<Callout type="warn">
+  Deletion is immediate and irreversible. Consider revoking the project's key or disabling its banks first if you only need to pause operations.
+</Callout>

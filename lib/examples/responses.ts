@@ -81,3 +81,110 @@ export const errorInvalidKey = {
 export const errorRateLimited = {
   error: "Too many order creations. Try again shortly.",
 } as const;
+
+// ─── Project management API ────────────────────────────────────────────────
+
+export const projectCreated = {
+  project: {
+    id: "prj_3x4mpl3t3st0rd3r1d2",
+    name: "Coffee Shop Demo",
+    description: null,
+    callbackUrl: "https://merchant.example.com/payments/callback",
+    theme: "violet",
+    apiKey: "pgk_9f8e7d6c5b4a39281706f5e4d3c2b1a0",
+    ownerId: "usr_3x4mpl3t3st0rd3r1d2",
+    createdAt: "2026-08-13T15:30:00.000Z",
+    updatedAt: "2026-08-13T15:30:00.000Z",
+  },
+} as const;
+
+export const projectList = {
+  data: [
+    {
+      id: "prj_3x4mpl3t3st0rd3r1d2",
+      name: "Coffee Shop Demo",
+      description: null,
+      callbackUrl: "https://merchant.example.com/payments/callback",
+      theme: "violet",
+      apiKey: "pgk_9f8e7d6c5b4a39281706f5e4d3c2b1a0",
+      ownerId: "usr_3x4mpl3t3st0rd3r1d2",
+      createdAt: "2026-08-13T15:30:00.000Z",
+      updatedAt: "2026-08-13T15:30:00.000Z",
+    },
+  ],
+  total: 1,
+  limit: 20,
+  offset: 0,
+} as const;
+
+export const projectRotatedKey = {
+  apiKey: "pgk_a1b2c3d4e5f60718293a4b5c6d7e8f90",
+} as const;
+
+export const bankAccountCreated = {
+  bankAccount: {
+    id: "bka_3x4mpl3t3st0rd3r1d2",
+    type: "CBE_BIRR",
+    accountName: "Demo Merchant",
+    accountNumber: "1000987654321",
+    phoneNumber: "251912345678",
+    createdAt: "2026-08-13T15:31:00.000Z",
+  },
+} as const;
+
+export const webhookCreated = {
+  webhook: {
+    id: "whk_3x4mpl3t3st0rd3r1d2",
+    url: "https://merchant.example.com/webhooks/pygate",
+    label: null,
+    events: ["payment.approved", "payment.rejected"],
+    active: true,
+    secretPrefix: "whsec_4b1c2d3e4f5a",
+    lastDeliveredAt: null,
+    createdAt: "2026-08-13T15:31:00.000Z",
+    signingSecret: "whsec_4b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f",
+  },
+} as const;
+
+export const inviteCreated = {
+  inviteId: "inv_3x4mpl3t3st0rd3r1d2",
+  token: "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718",
+  inviteUrl:
+    "https://dashboard.example.com/invite/a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718",
+  permissions: ["view_dashboard", "manage_bank_accounts"],
+  expiresAt: "2026-08-20T15:31:00.000Z",
+} as const;
+
+export const teamList = {
+  members: [
+    {
+      userId: "usr_3x4mpl3t3st0rd3r1d2",
+      email: "merchant@example.com",
+      name: "Demo Merchant",
+      permissions: [
+        "view_dashboard",
+        "manage_settings",
+        "manage_bank_accounts",
+        "validate_payments",
+        "create_invoice",
+        "manage_support",
+        "view_logs",
+        "manage_team",
+      ],
+      joinedAt: "2026-08-13T15:30:00.000Z",
+    },
+  ],
+  invites: [],
+} as const;
+
+export const errorInvalidAdminKey = {
+  error: "Invalid API key",
+} as const;
+
+export const errorMissingBearer = {
+  error: "Missing or malformed bearer token",
+} as const;
+
+export const errorBankAlreadyEnabled = {
+  error: "This bank is already enabled for this project",
+} as const;

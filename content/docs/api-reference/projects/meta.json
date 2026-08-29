@@ -1,0 +1,4 @@
+{
+  "title": "Projects",
+  "pages": ["overview", "create", "list", "update", "delete", "rotate-key", "bank-accounts", "webhooks", "team"]
+}

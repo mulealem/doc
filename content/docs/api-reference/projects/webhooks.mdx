@@ -1,0 +1,85 @@
+---
+title: Webhooks
+description: Subscribe, list, update, and delete webhooks on a project.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Webhooks
+
+Subscribe to project events. Each webhook has its own HMAC `signingSecret` (`whsec_…`), returned once at creation and on rotation. Signature verification works exactly as documented in [Webhooks](/webhooks/signing).
+
+## Subscribe a webhook
+
+<Endpoint method="POST" path="/api/v1/projects/{projectId}/webhooks" auth="x-api-key or Bearer" />
+
+<Params>
+  <Param name="url" type="string" required>
+    `https://` endpoint that receives events (SSRF-checked).
+  </Param>
+  <Param name="events" type="array" required>
+    Event names. Supported: `payment.approved`, `payment.rejected`.
+  </Param>
+  <Param name="label" type="string">
+    Display label.
+  </Param>
+</Params>
+
+```bash
+curl -X POST https://dashboard.example.com/api/v1/projects/prj_3x4mpl3t3st0rd3r1d2/webhooks \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+  -H "content-type: application/json" \
+  -d '{
+    "url": "https://merchant.example.com/webhooks/pygate",
+    "events": ["payment.approved", "payment.rejected"]
+  }'
+```
+
+<Response status="201" body={{
+  webhook: {
+    id: "whk_3x4mpl3t3st0rd3r1d2",
+    url: "https://merchant.example.com/webhooks/pygate",
+    label: null,
+    events: ["payment.approved", "payment.rejected"],
+    active: true,
+    secretPrefix: "whsec_4b1c2d3e4f5a",
+    lastDeliveredAt: null,
+    createdAt: "2026-08-13T15:31:00.000Z",
+    signingSecret: "whsec_4b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f"
+  }
+}} />
+
+<Callout type="warn">
+  `signingSecret` is shown exactly once. Rotate it if lost — see below.
+</Callout>
+
+## List webhooks
+
+<Endpoint method="GET" path="/api/v1/projects/{projectId}/webhooks" auth="x-api-key or Bearer" />
+
+## Update a webhook
+
+<Endpoint method="PATCH" path="/api/v1/projects/{projectId}/webhooks/{webhookId}" auth="x-api-key or Bearer" />
+
+<Params>
+  <Param name="url" type="string">New endpoint (https, SSRF-checked).</Param>
+  <Param name="events" type="array">Replacement event list.</Param>
+  <Param name="label" type="string">New label.</Param>
+  <Param name="active" type="boolean">Pause or resume delivery.</Param>
+</Params>
+
+## Rotate the signing secret
+
+<Endpoint method="POST" path="/api/v1/projects/{projectId}/webhooks/{webhookId}/rotate-secret" auth="x-api-key or Bearer" />
+
+<Response status="200" body={{
+  signingSecret: "whsec_a1b2c3d4e5f60718293a4b5c6d7e8f90"
+}} />
+
+## Delete a webhook
+
+<Endpoint method="DELETE" path="/api/v1/projects/{projectId}/webhooks/{webhookId}" auth="x-api-key or Bearer" />
+
+<Response status="200" body={{ ok: true }} />
+<Response status="404" body={{ error: "Webhook not found" }} />

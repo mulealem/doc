@@ -1,0 +1,91 @@
+---
+title: Team
+description: Manage project members and invitations.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Team
+
+Manage who can access a project and what they can do. Permission flags:
+
+`view_dashboard`, `manage_settings`, `manage_bank_accounts`, `validate_payments`, `create_invoice`, `manage_support`, `view_logs`, `manage_team`
+
+## List members and pending invites
+
+<Endpoint method="GET" path="/api/v1/projects/{projectId}/team" auth="x-api-key or Bearer" />
+
+<Response status="200" body={{
+  members: [
+    {
+      userId: "usr_3x4mpl3t3st0rd3r1d2",
+      email: "merchant@example.com",
+      name: "Demo Merchant",
+      permissions: ["view_dashboard", "manage_bank_accounts"],
+      joinedAt: "2026-08-13T15:30:00.000Z"
+    }
+  ],
+  invites: []
+}} />
+
+## Invite a teammate
+
+<Endpoint method="POST" path="/api/v1/projects/{projectId}/team/invites" auth="x-api-key or Bearer" />
+
+<Params>
+  <Param name="email" type="string">
+    Optional hint for who the invite is for.
+  </Param>
+  <Param name="permissions" type="array">
+    Permission flags for the new member. Defaults to `["view_dashboard"]`.
+  </Param>
+</Params>
+
+```bash
+curl -X POST https://dashboard.example.com/api/v1/projects/prj_3x4mpl3t3st0rd3r1d2/team/invites \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+  -H "content-type: application/json" \
+  -d '{
+    "email": "teammate@example.com",
+    "permissions": ["view_dashboard", "manage_bank_accounts"]
+  }'
+```
+
+<Response status="201" body={{
+  inviteId: "inv_3x4mpl3t3st0rd3r1d2",
+  token: "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718",
+  inviteUrl: "https://dashboard.example.com/invite/a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718",
+  permissions: ["view_dashboard", "manage_bank_accounts"],
+  expiresAt: "2026-08-20T15:31:00.000Z"
+}} />
+
+<Callout type="info">
+  Forward `inviteUrl` to the teammate — signing in through it joins them to the project with the given permissions. Invites expire after 7 days.
+</Callout>
+
+## Revoke an invite
+
+<Endpoint method="DELETE" path="/api/v1/projects/{projectId}/team/invites/{inviteId}" auth="x-api-key or Bearer" />
+
+<Response status="200" body={{ ok: true }} />
+<Response status="404" body={{ error: "Invite not found" }} />
+<Response status="409" body={{ error: "Invite already used" }} />
+
+## Update member permissions
+
+<Endpoint method="PATCH" path="/api/v1/projects/{projectId}/team/members/{userId}" auth="x-api-key or Bearer" />
+
+```bash
+curl -X PATCH https://dashboard.example.com/api/v1/projects/prj_3x4mpl3t3st0rd3r1d2/team/members/usr_3x4mpl3t3st0rd3r1d2 \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+  -H "content-type: application/json" \
+  -d '{ "permissions": ["view_dashboard", "create_invoice"] }'
+```
+
+## Remove a member
+
+<Endpoint method="DELETE" path="/api/v1/projects/{projectId}/team/members/{userId}" auth="x-api-key or Bearer" />
+
+<Response status="200" body={{ ok: true }} />
+<Response status="404" body={{ error: "Not a member" }} />

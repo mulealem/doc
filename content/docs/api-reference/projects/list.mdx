@@ -1,0 +1,74 @@
+---
+title: List projects
+description: List projects across the platform (admin) or resolve your own (project).
+---
+
+import { Endpoint, Param, Response } from "@/components";
+
+# List projects
+
+## List all projects (admin)
+
+<Endpoint method="GET" path="/api/v1/admin/projects" auth="Authorization: Bearer" />
+
+Paginated list of every project on the platform.
+
+### Query parameters
+
+<Param name="limit" type="number" default="20">
+  Page size, 1–100.
+</Param>
+<Param name="offset" type="number" default="0">
+  Number of rows to skip.
+</Param>
+
+```bash
+curl "https://dashboard.example.com/api/v1/admin/projects?limit=20&offset=0" \
+  -H "Authorization: Bearer pka_test_4b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r"
+```
+
+<Response status="200" body={{
+  data: [
+    {
+      id: "prj_3x4mpl3t3st0rd3r1d2",
+      name: "Coffee Shop Demo",
+      description: null,
+      callbackUrl: "https://merchant.example.com/payments/callback",
+      theme: "violet",
+      apiKey: "pgk_9f8e7d6c5b4a39281706f5e4d3c2b1a0",
+      ownerId: "usr_3x4mpl3t3st0rd3r1d2",
+      createdAt: "2026-08-13T15:30:00.000Z",
+      updatedAt: "2026-08-13T15:30:00.000Z"
+    }
+  ],
+  total: 1,
+  limit: 20,
+  offset: 0
+}} />
+
+## Resolve your own project (project key)
+
+<Endpoint method="GET" path="/api/v1/projects/me" auth="x-api-key" />
+
+Returns the project behind the presented `x-api-key`. Handy when your integration only has the key and needs the project id for sub-resource routes.
+
+```bash
+curl https://dashboard.example.com/api/v1/projects/me \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+```
+
+<Response status="200" body={{
+  project: {
+    id: "prj_3x4mpl3t3st0rd3r1d2",
+    name: "Coffee Shop Demo",
+    description: null,
+    callbackUrl: "https://merchant.example.com/payments/callback",
+    theme: "violet",
+    apiKey: "pgk_9f8e7d6c5b4a39281706f5e4d3c2b1a0",
+    ownerId: "usr_3x4mpl3t3st0rd3r1d2",
+    createdAt: "2026-08-13T15:30:00.000Z",
+    updatedAt: "2026-08-13T15:30:00.000Z"
+  }
+}} />
+
+<Response status="401" body={{ error: "Invalid API key" }} description="Missing or invalid x-api-key." />

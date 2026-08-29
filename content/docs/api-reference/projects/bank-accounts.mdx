@@ -1,0 +1,100 @@
+---
+title: Bank accounts
+description: Enable, list, update, and disable bank accounts on a project.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Bank accounts
+
+A project has at most one account per bank type. Enabling a bank creates the account; disabling deletes it. `CBE_BIRR` additionally requires a phone number.
+
+## Enable a bank
+
+<Endpoint method="POST" path="/api/v1/projects/{projectId}/bank-accounts" auth="x-api-key or Bearer" />
+
+<Params>
+  <Param name="type" type="string" required enum="CBE, TELEBIRR, ABYSSINIA, DASHEN, AWASH, ZEMEN, CBE_BIRR, MPESA, OTHER">
+    Bank type. One account per type per project.
+  </Param>
+  <Param name="accountName" type="string" required>
+    Account holder name, 2–200 characters.
+  </Param>
+  <Param name="accountNumber" type="string" required>
+    Account number, 4–100 characters.
+  </Param>
+  <Param name="phoneNumber" type="string">
+    Required when `type` is `CBE_BIRR`. Format `2519XXXXXXXX` (12 digits, no `+`).
+  </Param>
+</Params>
+
+```bash
+curl -X POST https://dashboard.example.com/api/v1/projects/prj_3x4mpl3t3st0rd3r1d2/bank-accounts \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+  -H "content-type: application/json" \
+  -d '{
+    "type": "CBE_BIRR",
+    "accountName": "Demo Merchant",
+    "accountNumber": "1000987654321",
+    "phoneNumber": "251912345678"
+  }'
+```
+
+<Response status="201" body={{
+  bankAccount: {
+    id: "bka_3x4mpl3t3st0rd3r1d2",
+    type: "CBE_BIRR",
+    accountName: "Demo Merchant",
+    accountNumber: "1000987654321",
+    phoneNumber: "251912345678",
+    createdAt: "2026-08-13T15:31:00.000Z"
+  }
+}} />
+
+<Response status="400" body={{ error: "Invalid body", details: "phoneNumber is required for CBE_BIRR" }} />
+<Response status="409" body={{ error: "This bank is already enabled for this project" }} />
+
+## List enabled banks
+
+<Endpoint method="GET" path="/api/v1/projects/{projectId}/bank-accounts" auth="x-api-key or Bearer" />
+
+```bash
+curl https://dashboard.example.com/api/v1/projects/prj_3x4mpl3t3st0rd3r1d2/bank-accounts \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+```
+
+<Response status="200" body={{
+  data: [
+    {
+      id: "bka_3x4mpl3t3st0rd3r1d2",
+      type: "CBE_BIRR",
+      accountName: "Demo Merchant",
+      accountNumber: "1000987654321",
+      phoneNumber: "251912345678",
+      createdAt: "2026-08-13T15:31:00.000Z"
+    }
+  ]
+}} />
+
+## Update a bank account
+
+<Endpoint method="PUT" path="/api/v1/projects/{projectId}/bank-accounts/{accountId}" auth="x-api-key or Bearer" />
+
+```bash
+curl -X PUT https://dashboard.example.com/api/v1/projects/prj_3x4mpl3t3st0rd3r1d2/bank-accounts/bka_3x4mpl3t3st0rd3r1d2 \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+  -H "content-type: application/json" \
+  -d '{ "accountName": "Demo Merchant (renamed)" }'
+```
+
+## Disable a bank
+
+<Endpoint method="DELETE" path="/api/v1/projects/{projectId}/bank-accounts/{accountId}" auth="x-api-key or Bearer" />
+
+```bash
+curl -X DELETE https://dashboard.example.com/api/v1/projects/prj_3x4mpl3t3st0rd3r1d2/bank-accounts/bka_3x4mpl3t3st0rd3r1d2 \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+```
+
+<Response status="200" body={{ ok: true }} />
+<Response status="404" body={{ error: "Bank account not found" }} />

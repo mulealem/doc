@@ -1,4 +1,4 @@
 {
   "title": "Concepts",
-  "pages": ["how-it-works", "api-keys", "orders-and-payments", "currencies-and-amounts", "rate-limits"]
+  "pages": ["how-it-works", "api-keys", "admin-api", "orders-and-payments", "currencies-and-amounts", "rate-limits"]
 }

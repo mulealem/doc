@@ -1,0 +1,38 @@
+---
+title: Projects API
+description: Headless project management for marketplace and B2C builders.
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Projects API
+
+The Projects API lets you create and manage merchant projects programmatically — provision projects for your users, attach bank accounts, subscribe webhooks, and manage teams without touching the dashboard UI. It's built for marketplace and B2C builders who let their own customers configure payments end-to-end.
+
+## Two auth tiers
+
+| Tier | Credential | Header | Scope |
+|---|---|---|---|
+| **Admin (platform)** | Platform API key `pka_…` (see [Admin API](/concepts/admin-api)) | `Authorization: Bearer pka_…` | Create, list, update, and delete **any** project; manage any project's resources |
+| **Project (owner)** | Project API key `pgk_…` | `x-api-key: pgk_…` | Manage **only its own** project (settings, banks, webhooks, team) |
+
+The same `pgk_…` key that authenticates the [Orders API](/api-reference/orders/create) also authorizes project-management endpoints for that project — one credential per merchant.
+
+## Resources
+
+| Resource | Endpoints |
+|---|---|
+| Projects | [Create](/api-reference/projects/create), [List](/api-reference/projects/list), [Update](/api-reference/projects/update), [Delete](/api-reference/projects/delete), [Rotate key](/api-reference/projects/rotate-key) |
+| Bank accounts | [Bank accounts](/api-reference/projects/bank-accounts) — enable, list, update, disable |
+| Webhooks | [Webhooks](/api-reference/projects/webhooks) — subscribe, list, update, delete, rotate secret |
+| Team | [Team](/api-reference/projects/team) — list members, invite, revoke, update permissions, remove |
+
+## Conventions
+
+- All responses are JSON. Errors use `{ "error": "message" }` with a proper status code; validation failures add a `details` field.
+- Mutations are rate limited per credential (120/min for admin keys, 60/min for project keys).
+- Every mutation is recorded in the project's audit log.
+
+<Callout type="info">
+  Admin-tier routes live under `/api/v1/admin/projects`; project-tier routes under `/api/v1/projects`. Both accept the admin bearer on project-scoped routes.
+</Callout>

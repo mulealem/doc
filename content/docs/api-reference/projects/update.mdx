@@ -1,0 +1,64 @@
+---
+title: Update project
+description: Update a project's settings.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Update a project
+
+Update name, description, callback URL, or theme.
+
+- Admin tier: <Endpoint method="PATCH" path="/api/v1/admin/projects/{projectId}" auth="Authorization: Bearer" />
+- Project tier: <Endpoint method="PATCH" path="/api/v1/projects/me" auth="x-api-key" />
+
+## Request body
+
+All fields are optional; send only the ones you want to change.
+
+<Params>
+  <Param name="name" type="string">
+    New project name, 2–100 characters.
+  </Param>
+  <Param name="description" type="string">
+    New description. Pass `null` to clear.
+  </Param>
+  <Param name="callbackUrl" type="string">
+    Must be `https://` and publicly resolvable (SSRF-checked).
+  </Param>
+  <Param name="theme" type="string" enum="violet, emerald, rose, amber, blue, slate">
+    Checkout page theme.
+  </Param>
+</Params>
+
+## Example
+
+```bash
+curl -X PATCH https://dashboard.example.com/api/v1/projects/me \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+  -H "content-type: application/json" \
+  -d '{
+    "name": "Coffee Shop Demo (updated)",
+    "theme": "emerald"
+  }'
+```
+
+## Responses
+
+<Response status="200" body={{
+  project: {
+    id: "prj_3x4mpl3t3st0rd3r1d2",
+    name: "Coffee Shop Demo (updated)",
+    description: null,
+    callbackUrl: "https://merchant.example.com/payments/callback",
+    theme: "emerald",
+    apiKey: "pgk_9f8e7d6c5b4a39281706f5e4d3c2b1a0",
+    ownerId: "usr_3x4mpl3t3st0rd3r1d2",
+    createdAt: "2026-08-13T15:30:00.000Z",
+    updatedAt: "2026-08-13T15:32:00.000Z"
+  }
+}} />
+
+<Response status="400" body={{ error: "Invalid body", details: "No fields to update" }} description="Empty body or validation failure." />
+<Response status="401" body={{ error: "Invalid API key" }} />
+<Response status="404" body={{ error: "Project not found" }} description="Admin tier only — no project with that id." />

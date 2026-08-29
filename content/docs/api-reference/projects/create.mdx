@@ -1,0 +1,109 @@
+---
+title: Create project
+description: Provision a new merchant project as an admin (platform) API key.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+import { Callout } from "fumadocs-ui/components/callout";
+
+# Create a project
+
+<Endpoint method="POST" path="/api/v1/admin/projects" auth="Authorization: Bearer" />
+
+Creates a new project. The project's `apiKey` is returned **once** in this response — the credential your merchant's integration will use.
+
+## Request body
+
+<Params>
+  <Param name="name" type="string" required>
+    Project name, 2–100 characters.
+  </Param>
+  <Param name="callbackUrl" type="string" required>
+    Legacy payment callback URL. Must be `https://` and publicly resolvable (SSRF-checked).
+  </Param>
+  <Param name="description" type="string">
+    Optional description.
+  </Param>
+  <Param name="theme" type="string" default="violet" enum="violet, emerald, rose, amber, blue, slate">
+    Checkout page theme.
+  </Param>
+  <Param name="ownerEmail" type="string">
+    Email of an existing PyGate user to own the project. Falls back to the platform account bound to the admin key.
+  </Param>
+</Params>
+
+## Example
+
+<Tabs items={["cURL", "Node", "Python"]}>
+  <Tab value="cURL">
+    ```bash
+    curl -X POST https://dashboard.example.com/api/v1/admin/projects \
+      -H "Authorization: Bearer pka_test_4b1c2d3e4f5g6h7i8j9k0l1m2n3o4p5q6r" \
+      -H "content-type: application/json" \
+      -d '{
+        "name": "Coffee Shop Demo",
+        "callbackUrl": "https://merchant.example.com/payments/callback",
+        "ownerEmail": "merchant@example.com"
+      }'
+    ```
+  </Tab>
+  <Tab value="Node">
+    ```ts
+    const res = await fetch("https://dashboard.example.com/api/v1/admin/projects", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + process.env.PYGATE_ADMIN_KEY,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Coffee Shop Demo",
+        callbackUrl: "https://merchant.example.com/payments/callback",
+      }),
+    });
+    const body = await res.json();
+    console.log(body.project.apiKey); // store this for the merchant
+    ```
+  </Tab>
+  <Tab value="Python">
+    ```python
+    import requests
+
+    res = requests.post(
+        "https://dashboard.example.com/api/v1/admin/projects",
+        headers={
+            "Authorization": "Bearer " + os.environ["PYGATE_ADMIN_KEY"],
+            "Content-Type": "application/json",
+        },
+        json={
+            "name": "Coffee Shop Demo",
+            "callbackUrl": "https://merchant.example.com/payments/callback",
+        },
+    )
+    print(res.json()["project"]["apiKey"])
+    ```
+  </Tab>
+</Tabs>
+
+## Responses
+
+<Response status="201" body={{
+  project: {
+    id: "prj_3x4mpl3t3st0rd3r1d2",
+    name: "Coffee Shop Demo",
+    description: null,
+    callbackUrl: "https://merchant.example.com/payments/callback",
+    theme: "violet",
+    apiKey: "pgk_9f8e7d6c5b4a39281706f5e4d3c2b1a0",
+    ownerId: "usr_3x4mpl3t3st0rd3r1d2",
+    createdAt: "2026-08-13T15:30:00.000Z",
+    updatedAt: "2026-08-13T15:30:00.000Z"
+  }
+}} />
+
+<Response status="400" body={{ error: "Invalid body", details: "callbackUrl is not a safe public URL" }} description="Validation failed." />
+<Response status="401" body={{ error: "Invalid API key" }} description="Missing, malformed, or revoked admin key." />
+<Response status="429" body={{ error: "Too many requests. Try again shortly." }} description="Rate limited. Honor the Retry-After header." />
+
+<Callout type="warn">
+  `apiKey` is shown exactly once. If you lose it, rotate the key via [Rotate key](/api-reference/projects/rotate-key).
+</Callout>
