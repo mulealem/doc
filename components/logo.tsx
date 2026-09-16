@@ -1,8 +1,8 @@
 /**
- * PyGate wordmark used in the navbar and favicon.
+ * Payo wordmark used in the navbar and favicon.
  * "Py" carries the brand accent; the rest adapts to the theme.
  */
-export function PyGateLogo() {
+export function PayoLogo() {
   return (
     <span
       style={{

@@ -6,15 +6,15 @@ description: Create a project, get an API key, and accept your first test paymen
 
 # Quickstart
 
-This walkthrough will take you from zero to a verified test payment. It assumes you have a [PyGate dashboard](https://dashboard.example.com) account; if you don't, [sign up](https://dashboard.example.com/signup) first.
+This walkthrough will take you from zero to a verified test payment. It assumes you have a [Payo dashboard](https://dashboard.example.com) account; if you don't, [sign up](https://dashboard.example.com/signup) first.
 
 <Callout type="info">
-  All examples in this guide use PyGate's **test mode**. You'll be working with a sandbox project, fake bank accounts, and no real money moves. See [Test mode](/guides/test-mode) for the fixtures.
+  All examples in this guide use Payo's **test mode**. You'll be working with a sandbox project, fake bank accounts, and no real money moves. See [Test mode](/guides/test-mode) for the fixtures.
 </Callout>
 
 ## 1. Create a project
 
-Every PyGate integration lives inside a **project**. A project has a name, an API key, a set of bank accounts customers can pay into, and one or more webhook subscriptions.
+Every Payo integration lives inside a **project**. A project has a name, an API key, a set of bank accounts customers can pay into, and one or more webhook subscriptions.
 
 1. Sign in at [dashboard.example.com](https://dashboard.example.com).
 2. Click **New project**, give it a name (`"Acme Store"`), and pick **Test mode**.
@@ -22,10 +22,10 @@ Every PyGate integration lives inside a **project**. A project has a name, an AP
 
 ## 2. Add a bank account
 
-Your customers will pay into one of your bank accounts. PyGate needs to know which.
+Your customers will pay into one of your bank accounts. Payo needs to know which.
 
 1. Inside the project, go to **Bank accounts** → **Add bank account**.
-2. Enter the account details. In test mode, the account number is ignored — PyGate accepts any well-formed number.
+2. Enter the account details. In test mode, the account number is ignored — Payo accepts any well-formed number.
 3. Mark the account as **Enabled**. The dashboard will refuse to create orders if no account is enabled.
 
 ## 3. Create an order
@@ -68,7 +68,7 @@ Open `paymentUrl` in a browser. In test mode the page will simulate a customer p
 
 ## 5. Receive a webhook
 
-A few seconds after the receipt is uploaded, PyGate will verify the receipt against the issuing bank. If the verification succeeds, it will deliver a `payment.approved` event to any webhook subscribed to that event.
+A few seconds after the receipt is uploaded, Payo will verify the receipt against the issuing bank. If the verification succeeds, it will deliver a `payment.approved` event to any webhook subscribed to that event.
 
 You can also poll the order directly:
 

@@ -1,8 +1,8 @@
 {
-  "name": "pygate-doc",
+  "name": "payo-doc",
   "version": "0.1.0",
   "private": true,
-  "description": "PyGate developer documentation site (doc.example.com). Built with Fumadocs on Next.js 16. Static export.",
+  "description": "Payo developer documentation site (doc.example.com). Built with Fumadocs on Next.js 16. Static export.",
   "scripts": {
     "dev": "next dev --port 3003",
     "mdx": "fumadocs-mdx",

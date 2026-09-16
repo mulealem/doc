@@ -1,14 +1,14 @@
 ---
 title: Compliance & data retention
-description: What data PyGate stores, for how long, and how to request deletion.
+description: What data Payo stores, for how long, and how to request deletion.
 ---
 
 
 # Compliance and data retention
 
-## What PyGate stores
+## What Payo stores
 
-For every order, PyGate stores:
+For every order, Payo stores:
 
 - `orderId` (cuid)
 - Amount, currency, description (your input)
@@ -16,7 +16,7 @@ For every order, PyGate stores:
 - Status (PENDING, PAID, EXPIRED, REJECTED)
 - Creation and update timestamps
 
-For every payment (when a receipt is uploaded), PyGate stores:
+For every payment (when a receipt is uploaded), Payo stores:
 
 - `paymentId` (cuid)
 - Link to the receipt image in R2 / S3-compatible storage
@@ -24,14 +24,14 @@ For every payment (when a receipt is uploaded), PyGate stores:
 - Verification result and the issuing bank's response
 - Approval/rejection timestamps
 
-For every webhook delivery, PyGate stores:
+For every webhook delivery, Payo stores:
 
 - The full payload (encrypted at rest)
 - The HMAC signature
 - The target URL
 - Attempt count, status, response code, response body
 
-## What PyGate does NOT store
+## What Payo does NOT store
 
 - Customer card numbers (there are no cards)
 - Customer passwords (handled by Better Auth in the dashboard)
@@ -53,18 +53,18 @@ After the retention period, data is purged automatically. There is no soft-delet
 
 ## Right to deletion
 
-Customers have the right to request deletion of their data. PyGate handles this on your behalf — when a customer requests deletion:
+Customers have the right to request deletion of their data. Payo handles this on your behalf — when a customer requests deletion:
 
 1. The customer's dispute/support ticket is purged.
 2. The receipt image is deleted from R2.
 3. The OCR-extracted fields (name, account) are nulled out.
 4. The `orderId` is preserved for tax compliance but no longer references personal data.
 
-To submit a deletion request, email `privacy@pygate.local` with the customer's order ID or payment ID.
+To submit a deletion request, email `privacy@payo.local` with the customer's order ID or payment ID.
 
 ## Subprocessors
 
-PyGate uses the following third-party services:
+Payo uses the following third-party services:
 
 - **Postgres** (self-hosted or Neon) — primary database
 - **Cloudflare R2** — receipt image storage
@@ -76,10 +76,10 @@ A signed Data Processing Agreement (DPA) is available on request.
 
 ## Compliance posture
 
-PyGate is not PCI-DSS certified because **no card data is processed**. There is no PCI scope for merchants integrating PyGate.
+Payo is not PCI-DSS certified because **no card data is processed**. There is no PCI scope for merchants integrating Payo.
 
-PyGate is GDPR-compliant by structure. The data model is designed so that personal data (name, account) is segregated from transactional data (order, amount) and can be deleted independently.
+Payo is GDPR-compliant by structure. The data model is designed so that personal data (name, account) is segregated from transactional data (order, amount) and can be deleted independently.
 
 <Callout type="info">
-  If you have a specific compliance question (SOC 2, HIPAA, et al.), email `compliance@pygate.local`. Custom packages are available for enterprise customers.
+  If you have a specific compliance question (SOC 2, HIPAA, et al.), email `compliance@payo.local`. Custom packages are available for enterprise customers.
 </Callout>

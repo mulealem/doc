@@ -1,16 +1,16 @@
 ---
 title: Retries & DLQ
-description: What PyGate does when your endpoint fails to respond.
+description: What Payo does when your endpoint fails to respond.
 ---
 
 
 # Retries and dead-letter queue
 
-PyGate uses a durable queue for webhook delivery. Every delivery is a row in the `WebhookDelivery` table, and the state of that row is the source of truth.
+Payo uses a durable queue for webhook delivery. Every delivery is a row in the `WebhookDelivery` table, and the state of that row is the source of truth.
 
 ## Retry policy
 
-When your endpoint returns a non-2xx response (or times out), PyGate applies this schedule:
+When your endpoint returns a non-2xx response (or times out), Payo applies this schedule:
 
 | Attempt | Wait before next attempt |
 |---|---|
@@ -33,7 +33,7 @@ The schedule is exponential with jitter — the actual wait may be ±20% of the 
 |---|---|
 | `200`, `201`, `202`, `204` | No — success |
 | Any other 2xx | No — success |
-| `3xx` | No — success (PyGate does not follow redirects on webhooks) |
+| `3xx` | No — success (Payo does not follow redirects on webhooks) |
 | `400` | No — your endpoint is misconfigured |
 | `401`, `403` | No — auth issue, fix your endpoint |
 | `404` | No — your endpoint is unreachable |

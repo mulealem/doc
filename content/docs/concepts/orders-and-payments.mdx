@@ -40,7 +40,7 @@ A payment is created when the customer uploads a receipt on the hosted checkout 
 
 ## Concurrency
 
-PyGate does not enforce idempotency on order creation — you can create two orders with identical `amount` and `description`. If you need your own idempotency (to avoid charging the same customer twice), pass a unique key in `metadata.idempotencyKey` and check before creating.
+Payo does not enforce idempotency on order creation — you can create two orders with identical `amount` and `description`. If you need your own idempotency (to avoid charging the same customer twice), pass a unique key in `metadata.idempotencyKey` and check before creating.
 
 ```json
 {

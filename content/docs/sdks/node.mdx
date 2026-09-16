@@ -1,12 +1,12 @@
 ---
 title: Node.js SDK
-description: Install and use the official PyGate SDK for Node.js.
+description: Install and use the official Payo SDK for Node.js.
 ---
 
 
 # Node.js SDK
 
-The official PyGate SDK for Node.js is [`@pygate/node`](https://www.npmjs.com/package/@pygate/node). It targets Node 18+ and ships with TypeScript types.
+The official Payo SDK for Node.js is [`@pygate/node`](https://www.npmjs.com/package/@pygate/node). It targets Node 18+ and ships with TypeScript types.
 
 ## Install
 
@@ -103,7 +103,7 @@ try {
   if (err instanceof PygateRateLimitError) {
     console.error("Rate limited; retry after", err.retryAfterSeconds);
   } else if (err instanceof PygateError) {
-    console.error("PyGate error", err.statusCode, err.message);
+    console.error("Payo error", err.statusCode, err.message);
   } else {
     throw err;
   }

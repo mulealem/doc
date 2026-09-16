@@ -23,16 +23,16 @@ Platform keys differ from [project API keys](/concepts/api-keys) in three ways:
 2. **Storage** — the full key is shown exactly once at creation; only a SHA-256 hash and a 12-character lookup prefix are stored. A lost key cannot be recovered — revoke it and issue a new one.
 3. **Lifecycle** — keys are named and individually revocable. Revocation takes effect immediately.
 
-Keys are created and revoked by PyGate admins from the dashboard's **Admin → API Keys** page.
+Keys are created and revoked by Payo admins from the dashboard's **Admin → API Keys** page.
 
 ## Ownership of created projects
 
 `POST /api/v1/admin/projects` resolves the project owner in this order:
 
-1. `ownerEmail` in the request body, if it matches an existing PyGate user.
+1. `ownerEmail` in the request body, if it matches an existing Payo user.
 2. Otherwise, the platform account bound to the API key (set when the key was issued).
 
-This lets a marketplace either map merchants to their existing PyGate accounts or keep every merchant project under the platform's own account and hand the merchant only the project `apiKey`.
+This lets a marketplace either map merchants to their existing Payo accounts or keep every merchant project under the platform's own account and hand the merchant only the project `apiKey`.
 
 ## Two tiers at a glance
 

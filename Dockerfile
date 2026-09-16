@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# PyGate developer docs — Fumadocs + MDX, Next.js 16, `output: "export"`.
+# Payo developer docs — Fumadocs + MDX, Next.js 16, `output: "export"`.
 #
 # Recommended deploy target is the Coolify **Static Site** resource type
 # (Build Command `npm run build`, Publish Directory `out`). This Dockerfile

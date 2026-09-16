@@ -1,12 +1,12 @@
 ---
 title: Go SDK
-description: Install and use the official PyGate SDK for Go.
+description: Install and use the official Payo SDK for Go.
 ---
 
 
 # Go SDK
 
-The official PyGate SDK for Go is [`github.com/pygate/pygate-go`](https://pkg.go.dev/github.com/pygate/pygate-go). It targets Go 1.21+ and exposes typed structs for every response.
+The official Payo SDK for Go is [`github.com/pygate/pygate-go`](https://pkg.go.dev/github.com/pygate/pygate-go). It targets Go 1.21+ and exposes typed structs for every response.
 
 ## Install
 
@@ -121,7 +121,7 @@ if err != nil {
     }
     var pgErr *pygate.Error
     if errors.As(err, &pgErr) {
-        log.Printf("PyGate error %d: %s", pgErr.StatusCode, pgErr.Message)
+        log.Printf("Payo error %d: %s", pgErr.StatusCode, pgErr.Message)
         return
     }
     panic(err)

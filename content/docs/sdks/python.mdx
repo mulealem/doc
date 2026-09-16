@@ -1,12 +1,12 @@
 ---
 title: Python SDK
-description: Install and use the official PyGate SDK for Python.
+description: Install and use the official Payo SDK for Python.
 ---
 
 
 # Python SDK
 
-The official PyGate SDK for Python is [`pygate`](https://pypi.org/project/pygate/). It targets Python 3.9+ and ships with type hints.
+The official Payo SDK for Python is [`pygate`](https://pypi.org/project/payo/). It targets Python 3.9+ and ships with type hints.
 
 ## Install
 
@@ -89,7 +89,7 @@ try:
 except PygateRateLimitError as e:
     print("Rate limited; retry after", e.retry_after_seconds)
 except PygateError as e:
-    print(f"PyGate error {e.status_code}: {e}")
+    print(f"Payo error {e.status_code}: {e}")
 ```
 
 ## Django / Flask integration

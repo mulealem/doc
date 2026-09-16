@@ -1,12 +1,12 @@
 ---
 title: PHP SDK
-description: Install and use the official PyGate SDK for PHP.
+description: Install and use the official Payo SDK for PHP.
 ---
 
 
 # PHP SDK
 
-The official PyGate SDK for PHP is [`pygate/pygate-php`](https://packagist.org/packages/pygate/pygate-php). It targets PHP 8.1+ and ships with first-class Laravel support.
+The official Payo SDK for PHP is [`pygate/pygate-php`](https://packagist.org/packages/pygate/pygate-php). It targets PHP 8.1+ and ships with first-class Laravel support.
 
 ## Install
 
@@ -18,7 +18,7 @@ composer require pygate/pygate-php
 
 ```php
 <?php
-use Pygate\Pygate;
+use Pygate.Pygate;
 
 $client = new Pygate(getenv("PYGATE_API_KEY"));
 ```
@@ -87,7 +87,7 @@ $deliveryId = $request->header("X-PyGate-Delivery-Id");
 ],
 
 // In a controller
-use Pygate\Laravel\Facades\Pygate;
+use Pygate\Laravel\Facades.Pygate;
 
 public function store(Request $request) {
     $order = Pygate::orders()->create([
@@ -111,7 +111,7 @@ try {
 } catch (RateLimitException $e) {
     $retryAfter = $e->retryAfterSeconds();
 } catch (PygateException $e) {
-    Log::error("PyGate error " . $e->getCode(), ["msg" => $e->getMessage()]);
+    Log::error("Payo error " . $e->getCode(), ["msg" => $e->getMessage()]);
 }
 ```
 

@@ -1,12 +1,12 @@
 ---
 title: Security
-description: How PyGate protects your integration and your data.
+description: How Payo protects your integration and your data.
 ---
 
 
 # Security
 
-This page summarizes the security posture of PyGate. For the long-form, audit-ready document, request the Security Pack from `security@pygate.local`.
+This page summarizes the security posture of Payo. For the long-form, audit-ready document, request the Security Pack from `security@payo.local`.
 
 ## Encryption
 
@@ -31,14 +31,14 @@ This page summarizes the security posture of PyGate. For the long-form, audit-re
 - **Dependencies** — Dependabot runs nightly. Critical patches are auto-merged. `npm audit` is part of CI.
 - **Static analysis** — ESLint with security-focused rules; `npm run lint` blocks builds on warnings.
 - **Penetration testing** — Annual third-party pentest; report excerpts available under NDA.
-- **Bug bounty** — Private program via HackerOne. Email `security@pygate.local` for an invite.
+- **Bug bounty** — Private program via HackerOne. Email `security@payo.local` for an invite.
 
 ## Operational
 
 - **Audit log** — Every dashboard action is logged with the actor, timestamp, IP, and request ID. Visible to project owners.
 - **Backups** — Daily Postgres snapshot, retained 30 days. R2 objects replicated across regions.
 - **Disaster recovery** — RPO 24 hours, RTO 4 hours. Documented in the Security Pack.
-- **On-call** — 24/7 rotation for sev-1 incidents. Status at [status.pygate.example.com](https://status.pygate.example.com).
+- **On-call** — 24/7 rotation for sev-1 incidents. Status at [status.payo.example.com](https://status.payo.example.com).
 
 ## Role-based access
 
@@ -53,7 +53,7 @@ There is no built-in "billing-only" role. Use `viewer` and grant API access to f
 
 ## Reporting a vulnerability
 
-Email `security@pygate.local` with a description and a proof-of-concept. PGP key is on the security page of the dashboard. We respond within 24 hours and credit reporters in the Security Pack (with permission).
+Email `security@payo.local` with a description and a proof-of-concept. PGP key is on the security page of the dashboard. We respond within 24 hours and credit reporters in the Security Pack (with permission).
 
 <Callout type="warn">
   Please do not file vulnerability reports as GitHub issues. Email is the only way to ensure they're triaged by the security team.

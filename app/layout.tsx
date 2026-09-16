@@ -4,15 +4,15 @@ import type { ReactNode } from "react";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider";
 import { source } from "@/lib/source";
-import { PyGateLogo } from "@/components/logo";
+import { PayoLogo } from "@/components/logo";
 import "./globals.css";
 
 const dashboardUrl =
   process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "https://dashboard.example.com";
 
 export const metadata: Metadata = {
-  title: { default: "PyGate Docs", template: "%s — PyGate Docs" },
-  description: "PyGate developer documentation",
+  title: { default: "Payo Docs", template: "%s — Payo Docs" },
+  description: "Payo developer documentation",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_DASHBOARD_URL ?? "https://docs.example.com",
   ),
@@ -34,7 +34,7 @@ function Footer() {
         color: "var(--color-fd-muted-foreground, #888)",
       }}
     >
-      <span>© {new Date().getFullYear()} PyGate. Receipt-based payments.</span>
+      <span>© {new Date().getFullYear()} Payo. Receipt-based payments.</span>
       <span style={{ display: "flex", gap: "1.25rem", marginLeft: "auto" }}>
         <Link href="/security">Security</Link>
         <Link href="/changelog">Changelog</Link>
@@ -59,7 +59,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         >
           <DocsLayout
             tree={source.pageTree}
-            nav={{ title: <PyGateLogo />, url: "/" }}
+            nav={{ title: <PayoLogo />, url: "/" }}
             sidebar={{ defaultOpenLevel: 1 }}
             themeSwitch={{ mode: "light-dark-system" }}
             githubUrl="https://github.com/pygate/pygate"

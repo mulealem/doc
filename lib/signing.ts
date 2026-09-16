@@ -1,7 +1,7 @@
 import { createHash, createHmac } from "node:crypto";
 
 /**
- * Compute the PyGate webhook signature.
+ * Compute the Payo webhook signature.
  *
  * Algorithm: sha256 = HMAC-SHA256(key=secret, msg=`${timestamp}.${rawBody}`)
  *

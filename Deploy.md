@@ -1,6 +1,6 @@
 # Deploy — docs (docs.payment.et)
 
-PyGate developer documentation site. Built with **Fumadocs + MDX** on
+Payo developer documentation site. Built with **Fumadocs + MDX** on
 Next.js 16. The build emits a fully static export to `doc/out/`.
 
 ## Public URL
@@ -107,7 +107,7 @@ and serves it with nginx on port 8080. Coolify config would be:
 1. Add the **Static Site** resource with the values above.
 2. Deploy. Coolify will run `npm install && npm run build` and serve
    `out/` from a CDN-friendly origin.
-3. Visit `https://docs.payment.et` — you should see the PyGate docs.
+3. Visit `https://docs.payment.et` — you should see the Payo docs.
 
 ## Troubleshooting: site returns 502 / "can't be reached"
 
@@ -192,7 +192,7 @@ container on port 8080, and the build log shows `docker compose … up
      (`NEXT_PUBLIC_DASHBOARD_URL`, `NEXT_PUBLIC_CHECKOUT_URL`, …).
    - Attached domain(s).
 2. **Delete the Application resource.** This removes the
-   `pygate-docs` / `hbh6udmnajikkabvq27ooa9v-*` containers and any
+   `payo-docs` / `hbh6udmnajikkabvq27ooa9v-*` containers and any
    corrupted domain entries that were injecting malformed `COOLIFY_URL`
    values.
 3. **Add Resource → Static Site** with:

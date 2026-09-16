@@ -1,9 +1,9 @@
-name: pygate-docs
+name: payo-docs
 
 services:
   docs:
     build: .
-    container_name: pygate-docs
+    container_name: payo-docs
     restart: unless-stopped
     ports:
       - "3003:8080"

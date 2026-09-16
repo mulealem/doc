@@ -120,5 +120,5 @@ Creates an order for a payment. Returns a hosted `paymentUrl` that you redirect 
 <Response status="429" body={{ error: "Too many order creations. Try again shortly." }} description="Rate limited. Honor the Retry-After header." />
 
 <Callout type="info">
-  Redirect the customer to `paymentUrl` instead of embedding it in an iframe. The checkout page is hosted on a separate origin (`checkout.example.com`) by design — it keeps your app out of PCI scope and gives you free access to PyGate's automatic UI updates.
+  Redirect the customer to `paymentUrl` instead of embedding it in an iframe. The checkout page is hosted on a separate origin (`checkout.example.com`) by design — it keeps your app out of PCI scope and gives you free access to Payo's automatic UI updates.
 </Callout>

@@ -6,12 +6,12 @@ description: The end-to-end receipt-based payment flow.
 
 # How it works
 
-PyGate is built around the fact that bank and mobile-money transfers are **push** payments, not **pull**. The customer initiates the transfer from their own app, and the receipt is the only ground truth.
+Payo is built around the fact that bank and mobile-money transfers are **push** payments, not **pull**. The customer initiates the transfer from their own app, and the receipt is the only ground truth.
 
 ## The flow
 
 ```
-1. YOUR SERVER                       PYGATE                       CUSTOMER
+1. YOUR SERVER                       PAYO                       CUSTOMER
    ─────────────                       ──────                       ───────
    POST /api/v1/orders
    ─────────────────────────────────►
@@ -47,18 +47,18 @@ An order has at most one payment. A payment has at most one approval. The whole 
 
 ## Verification
 
-When a receipt is uploaded PyGate runs it through two stages:
+When a receipt is uploaded Payo runs it through two stages:
 
 1. **OCR** — `tesseract.js` extracts text from the image. For PDFs, `pdf-parse` does the same.
 2. **Smart verify** — the extracted fields (amount, payer account, reference, date) are matched against the issuing bank. If the bank's API is reachable, the receipt is reconciled against the actual transaction record.
 
-OCR alone is insufficient: a photoshopped receipt will pass OCR. The bank's API is the source of truth. If the bank is unreachable, PyGate falls back to the receipt and flags the payment for manual review (visible in the dashboard, but not auto-approved).
+OCR alone is insufficient: a photoshopped receipt will pass OCR. The bank's API is the source of truth. If the bank is unreachable, Payo falls back to the receipt and flags the payment for manual review (visible in the dashboard, but not auto-approved).
 
 ## Settlement
 
-PyGate doesn't hold your money. Every payment is settled directly to your bank account by the issuing bank per their normal schedule. PyGate charges a per-transaction fee on the dashboard's invoice, separately.
+Payo doesn't hold your money. Every payment is settled directly to your bank account by the issuing bank per their normal schedule. Payo charges a per-transaction fee on the dashboard's invoice, separately.
 
-## What PyGate does NOT do
+## What Payo does NOT do
 
 - It does not store card numbers. There are no cards.
 - It does not initiate transfers on behalf of the customer. The customer must push.

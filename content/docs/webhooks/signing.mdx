@@ -1,6 +1,6 @@
 ---
 title: Signature verification
-description: How to verify that a webhook came from PyGate.
+description: How to verify that a webhook came from Payo.
 ---
 
 
@@ -136,4 +136,4 @@ Including the timestamp in the signed payload prevents replay attacks. Your rece
 
 ## What to do when verification fails
 
-Return `401`. PyGate will not retry 401s (they're a client error), so this signals "your endpoint is not configured correctly" without amplifying the problem. Log the failed request and inspect the headers and the signing secret in your dashboard.
+Return `401`. Payo will not retry 401s (they're a client error), so this signals "your endpoint is not configured correctly" without amplifying the problem. Log the failed request and inspect the headers and the signing secret in your dashboard.

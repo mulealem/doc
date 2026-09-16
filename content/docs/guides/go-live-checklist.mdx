@@ -1,6 +1,6 @@
 ---
 title: Go-live checklist
-description: Everything to verify before switching to a live PyGate project.
+description: Everything to verify before switching to a live Payo project.
 ---
 
 
@@ -39,7 +39,7 @@ Before flipping your project to live mode, walk through this list. Each item is 
 - [ ] Retry logic respects `Retry-After` headers
 - [ ] Order creation passes a unique `metadata.idempotencyKey` to prevent duplicates
 - [ ] Order lookup is used as a fallback; webhooks are the primary mechanism
-- [ ] Receipts are not stored on your servers — they live in PyGate's R2
+- [ ] Receipts are not stored on your servers — they live in Payo's R2
 
 ## Tests
 
@@ -50,10 +50,10 @@ Before flipping your project to live mode, walk through this list. Each item is 
 
 ## Operational
 
-- [ ] `support@pygate.local` is on your incident response rota
-- [ ] PyGate status page ([status.pygate.example.com](https://status.pygate.example.com)) is bookmarked
+- [ ] `support@payo.local` is on your incident response rota
+- [ ] Payo status page ([status.payo.example.com](https://status.payo.example.com)) is bookmarked
 - [ ] At least two team members have dashboard access
-- [ ] Billing details are filled in (PyGate charges per-transaction, invoiced monthly)
+- [ ] Billing details are filled in (Payo charges per-transaction, invoiced monthly)
 
 ## Cutover
 

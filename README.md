@@ -1,6 +1,6 @@
-# pygate/doc
+# payo/doc
 
-The PyGate developer documentation site. Built with **Fumadocs** on **Next.js 16** with **MDX**. Static-exported to `out/` and served by an Nginx alpine container. This project replaces the previous Nextra-based site in `../docs`.
+The Payo developer documentation site. Built with **Fumadocs** on **Next.js 16** with **MDX**. Static-exported to `out/` and served by an Nginx alpine container. This project replaces the previous Nextra-based site in `../docs`.
 
 ## Local development
 
@@ -69,8 +69,8 @@ Container listens on `http://localhost:3003` (host port 3003 → container port 
 
 | Env | Purpose | Default |
 |---|---|---|
-| `NEXT_PUBLIC_DASHBOARD_URL` | URL of the PyGate dashboard, used in the nav "Dashboard" link and `metadataBase` | `https://dashboard.example.com` |
-| `NEXT_PUBLIC_CHECKOUT_URL` | URL of the PyGate checkout app (reserved; not currently read by code) | `https://checkout.example.com` |
+| `NEXT_PUBLIC_DASHBOARD_URL` | URL of the Payo dashboard, used in the nav "Dashboard" link and `metadataBase` | `https://dashboard.example.com` |
+| `NEXT_PUBLIC_CHECKOUT_URL` | URL of the Payo checkout app (reserved; not currently read by code) | `https://checkout.example.com` |
 
 The docs site is fully static at build time — `NEXT_PUBLIC_*` values are inlined into the HTML, so there's no runtime env to worry about.
 

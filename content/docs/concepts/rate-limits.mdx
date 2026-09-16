@@ -6,7 +6,7 @@ description: Quotas, limits, and how to handle a 429.
 
 # Rate limits
 
-PyGate enforces per-IP rate limits on the small set of endpoints that are expensive or attractive to abuse. Most read-only endpoints (order lookup, etc.) are not rate-limited.
+Payo enforces per-IP rate limits on the small set of endpoints that are expensive or attractive to abuse. Most read-only endpoints (order lookup, etc.) are not rate-limited.
 
 ## Limits
 
@@ -61,7 +61,7 @@ async function createOrderWithRetry(payload) {
 
 ## Higher limits
 
-If you have a legitimate need for more than 60 req/min/IP (e.g. a high-volume marketplace), email `support@pygate.local` with:
+If you have a legitimate need for more than 60 req/min/IP (e.g. a high-volume marketplace), email `support@payo.local` with:
 
 - Your account ID
 - The peak request rate you expect
