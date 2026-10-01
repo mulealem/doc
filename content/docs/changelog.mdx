@@ -7,6 +7,33 @@ description: What changed, when, and what to do about it.
 
 All notable changes to the Payo API and SDKs are documented here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## 2026-09-30 — Accounts at creation, new banks, order events
+
+### Added
+
+- **Receiving accounts at project creation.** The dashboard now collects at
+  least one bank or wallet account (type, account holder name, account
+  number) when a project is created, so a new project can take payments
+  immediately. Accounts from your other projects are offered as one-click
+  suggestions, and the per-project bank-accounts page can prefill details
+  from accounts you enabled elsewhere — no re-typing.
+- `bankAccounts` array on `POST /api/v1/admin/projects` — create receiving
+  accounts with the project through the API (optional; one account per bank
+  type, `CBE_BIRR` requires `phoneNumber`). See [Create project](/api-reference/projects/create).
+- `GET /api/v1/orders/{orderId}/events` — chronological lifecycle timeline
+  for an order (`order.created`, `receipt.submitted`, `payment.approved`,
+  `payment.rejected`, `order.expired`). See [Order events](/api-reference/orders/events).
+- New bank types `SIINQEE` and `KAAFI_BIRR`. Customers can upload receipt
+  screenshots for these; automated transaction-number lookup isn't available
+  yet, so those payments go to manual review.
+- An installable agent skill (`agent-skill/SKILL.md`) so AI coding
+  assistants can integrate Payo in one shot.
+
+### Changed
+
+- Project creation in the dashboard is atomic: the project and its initial
+  accounts are written together, or not at all.
+
 ## 2026-08-13 — Public beta
 
 The first public release of Payo. The API is stable but marked `v1beta` until we ship 1.0 later this year.

@@ -30,7 +30,23 @@ Creates a new project. The project's `apiKey` is returned **once** in this respo
   <Param name="ownerEmail" type="string">
     Email of an existing Payo user to own the project. Falls back to the platform account bound to the admin key.
   </Param>
+  <Param name="bankAccounts" type="array">
+    Optional receiving accounts to create with the project, so it can take
+    payments immediately. Each item has `type` (enum below), `accountName`,
+    `accountNumber`, and — required when `type` is `CBE_BIRR` — `phoneNumber`.
+    At most one account per bank type, 20 accounts max. Types: `CBE`,
+    `TELEBIRR`, `ABYSSINIA`, `DASHEN`, `AWASH`, `ZEMEN`, `CBE_BIRR`, `MPESA`,
+    `SIINQEE`, `KAAFI_BIRR`, `OTHER`.
+  </Param>
 </Params>
+
+<Callout type="info">
+  The Payo dashboard requires at least one bank or wallet account when a
+  project is created there; through the API the field is optional and the
+  existing behavior applies — [order creation](/api-reference/orders/create)
+  returns `400 No bank account is enabled for this project` until an account
+  is added.
+</Callout>
 
 ## Example
 
@@ -43,7 +59,14 @@ Creates a new project. The project's `apiKey` is returned **once** in this respo
       -d '{
         "name": "Coffee Shop Demo",
         "callbackUrl": "https://merchant.example.com/payments/callback",
-        "ownerEmail": "merchant@example.com"
+        "ownerEmail": "merchant@example.com",
+        "bankAccounts": [
+          {
+            "type": "CBE",
+            "accountName": "Demo Merchant",
+            "accountNumber": "1000123456789"
+          }
+        ]
       }'
     ```
   </Tab>
@@ -58,6 +81,9 @@ Creates a new project. The project's `apiKey` is returned **once** in this respo
       body: JSON.stringify({
         name: "Coffee Shop Demo",
         callbackUrl: "https://merchant.example.com/payments/callback",
+        bankAccounts: [
+          { type: "CBE", accountName: "Demo Merchant", accountNumber: "1000123456789" },
+        ],
       }),
     });
     const body = await res.json();
@@ -77,6 +103,9 @@ Creates a new project. The project's `apiKey` is returned **once** in this respo
         json={
             "name": "Coffee Shop Demo",
             "callbackUrl": "https://merchant.example.com/payments/callback",
+            "bankAccounts": [
+                {"type": "CBE", "accountName": "Demo Merchant", "accountNumber": "1000123456789"}
+            ],
         },
     )
     print(res.json()["project"]["apiKey"])

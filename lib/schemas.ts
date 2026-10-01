@@ -143,7 +143,7 @@ export const bankAccountObjectSchema = {
     id: { type: "string" },
     type: {
       type: "string",
-      enum: ["CBE", "TELEBIRR", "ABYSSINIA", "DASHEN", "AWASH", "ZEMEN", "CBE_BIRR", "MPESA", "OTHER"],
+      enum: ["CBE", "TELEBIRR", "ABYSSINIA", "DASHEN", "AWASH", "ZEMEN", "CBE_BIRR", "MPESA", "SIINQEE", "KAAFI_BIRR", "OTHER"],
     },
     accountName: { type: "string" },
     accountNumber: { type: "string" },

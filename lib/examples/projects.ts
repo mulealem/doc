@@ -10,7 +10,14 @@ export const curlAdminCreateProject = `curl -X POST ${projectsApiBase}/admin/pro
   -d '{
     "name": "Coffee Shop Demo",
     "callbackUrl": "https://merchant.example.com/payments/callback",
-    "ownerEmail": "merchant@example.com"
+    "ownerEmail": "merchant@example.com",
+    "bankAccounts": [
+      {
+        "type": "CBE",
+        "accountName": "Demo Merchant",
+        "accountNumber": "1000123456789"
+      }
+    ]
   }'`;
 
 /** GET /api/v1/admin/projects — admin tier lists projects. */
@@ -75,6 +82,9 @@ export const nodeAdminCreateProject = `const res = await fetch(
     body: JSON.stringify({
       name: "Coffee Shop Demo",
       callbackUrl: "https://merchant.example.com/payments/callback",
+      bankAccounts: [
+        { type: "CBE", accountName: "Demo Merchant", accountNumber: "1000123456789" },
+      ],
     }),
   },
 );
@@ -111,6 +121,9 @@ res = requests.post(
     json={
         "name": "Coffee Shop Demo",
         "callbackUrl": "https://merchant.example.com/payments/callback",
+        "bankAccounts": [
+            {"type": "CBE", "accountName": "Demo Merchant", "accountNumber": "1000123456789"}
+        ],
     },
 )
 project = res.json()["project"]
@@ -130,3 +143,7 @@ res = requests.post(
     },
 )
 print(res.status_code)`;
+
+/** GET /api/v1/orders/{orderId}/events — order lifecycle timeline. */
+export const curlGetOrderEvents = `curl ${projectsApiBase}/orders/ord_3x4mpl3t3st0rd3r1d2/events \\
+  -H "x-api-key: ${projectKey}"`;

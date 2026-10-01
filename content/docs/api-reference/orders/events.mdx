@@ -1,0 +1,68 @@
+---
+title: Order events
+description: Retrieve the chronological lifecycle timeline of an order.
+---
+
+import { Endpoint, Response } from "@/components";
+
+# Order events
+
+<Endpoint method="GET" path="/api/v1/orders/{orderId}/events" auth="x-api-key" />
+
+Returns the order's lifecycle as an ordered timeline, derived from the same
+records the dashboard uses — useful for support tooling and reconciliation
+loops that want the full history in one call.
+
+## Example
+
+```bash
+curl https://dashboard.example.com/api/v1/orders/ord_3x4mpl3t3st0rd3r1d2/events \
+  -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i"
+```
+
+## Responses
+
+<Response status="200" body={{
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  status: "COMPLETED",
+  events: [
+    {
+      type: "order.created",
+      at: "2026-09-30T10:00:00.000Z",
+      detail: { amount: 250, currency: "ETB" }
+    },
+    {
+      type: "receipt.submitted",
+      at: "2026-09-30T10:02:11.000Z",
+      detail: {
+        paymentId: "pay_3x4mpl3t3st0rd3r1d2",
+        receiptType: "IMAGE",
+        reference: "FT2509A1B2C3D4E5F6G7H"
+      }
+    },
+    {
+      type: "payment.approved",
+      at: "2026-09-30T10:02:48.000Z",
+      detail: {
+        paymentId: "pay_3x4mpl3t3st0rd3r1d2",
+        reference: "FT2509A1B2C3D4E5F6G7H"
+      }
+    }
+  ]
+}} />
+
+## Event types
+
+| Type | When |
+|---|---|
+| `order.created` | The order was created. |
+| `receipt.submitted` | The customer uploaded a receipt. |
+| `payment.approved` | The payment was approved (auto or manual). |
+| `payment.rejected` | The payment was rejected. |
+| `order.expired` | The order expired unpaid. |
+
+`detail` contents vary per type and are informational — branch on `type`,
+not on `detail` shape.
+
+<Response status="404" body={{ error: "Order not found" }} description="Unknown orderId or the order belongs to another project." />
+<Response status="401" body={{ error: "Missing x-api-key header" }} />

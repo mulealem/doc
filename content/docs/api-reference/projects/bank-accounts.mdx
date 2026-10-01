@@ -14,7 +14,7 @@ A project has at most one account per bank type. Enabling a bank creates the acc
 <Endpoint method="POST" path="/api/v1/projects/{projectId}/bank-accounts" auth="x-api-key or Bearer" />
 
 <Params>
-  <Param name="type" type="string" required enum="CBE, TELEBIRR, ABYSSINIA, DASHEN, AWASH, ZEMEN, CBE_BIRR, MPESA, OTHER">
+  <Param name="type" type="string" required enum="CBE, TELEBIRR, ABYSSINIA, DASHEN, AWASH, ZEMEN, CBE_BIRR, MPESA, SIINQEE, KAAFI_BIRR, OTHER">
     Bank type. One account per type per project.
   </Param>
   <Param name="accountName" type="string" required>
