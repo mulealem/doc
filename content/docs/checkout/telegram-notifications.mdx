@@ -1,0 +1,64 @@
+---
+title: Telegram review notifications
+description: Let customers opt in to a Telegram message when their payment is reviewed by a human.
+---
+
+# Telegram review notifications
+
+When a receipt can't be auto-approved — an amount mismatch, an old receipt, a
+reference that doesn't match — the payment waits for a human review. The
+checkout's pending screen explains exactly what failed and offers an optional
+**"Notify me on Telegram"** button. If the customer taps it, Payo sends them a
+Telegram message the moment the review is done.
+
+The opt-in is fully optional: customers who ignore it just keep the page open
+(or close it and check with the merchant the usual way).
+
+## What the customer sees
+
+- **While verifying** — a progress tracker (receipt received → automatic
+  checks → result) instead of an open-ended spinner.
+- **If a rule failed** — a card explaining *what* failed ("Amount doesn't
+  match", "Receipt too old", …) with the actual details, plus what happens
+  next: the merchant reviews it manually.
+- **After tapping "Notify me on Telegram"** — the customer's Telegram app
+  opens with a pre-filled deep link to the Payo bot. Sending `/start` binds
+  their chat to this order; the bot confirms immediately.
+
+When the merchant approves or rejects the payment, the customer receives one
+message with the outcome (and the rejection note, if any), localized to the
+language they were using on the checkout page. If the payment was already
+reviewed before they linked, the bot tells them the final state right away
+instead.
+
+## One-time setup
+
+1. **Create the bot** — chat with [@BotFather](https://t.me/BotFather):
+   `/newbot`, pick a name and username, copy the HTTP API token.
+2. **Deploy the bot service** — the `telegram-bot/` project (see its
+   `README.md`). It's a small stateless service: it relays `/start` payloads
+   to the dashboard and sends queued messages. It needs `TELEGRAM_BOT_TOKEN`,
+   `TELEGRAM_INTERNAL_TOKEN`, and `DASHBOARD_URL`.
+3. **Configure the dashboard** — add to the dashboard environment:
+
+   | Variable | Value |
+   |---|---|
+   | `TELEGRAM_BOT_USERNAME` | the bot's username, without the `@` |
+   | `TELEGRAM_BOT_URL` | base URL of the bot service (e.g. `http://telegram-bot:3006`) |
+   | `TELEGRAM_INTERNAL_TOKEN` | shared secret, `openssl rand -hex 32` (same value on the bot) |
+   | `TELEGRAM_LINK_SECRET` | HMAC key for deep-link payloads, `openssl rand -hex 32` |
+
+Until these are set the checkout simply doesn't show the Telegram option —
+nothing else changes.
+
+## Privacy & abuse properties
+
+- The deep link's payload is HMAC-signed with `TELEGRAM_LINK_SECRET`, so chat
+  bindings can't be forged and order ids can't be enumerated through the bot.
+- Only private chats can bind; group chats are ignored by the bot, so payment
+  status can never leak into a group.
+- The bot stores nothing: bindings live in the dashboard's database
+  (`TelegramBinding`), messages in a `TelegramDelivery` outbox with retries
+  driven by the existing sweep cron.
+- Messages are best-effort notifications. The authoritative status is always
+  the checkout page and your webhooks.

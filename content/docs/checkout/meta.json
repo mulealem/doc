@@ -1,4 +1,9 @@
 {
   "title": "Hosted Checkout",
-  "pages": ["hosted-page", "customization", "disputes-and-support"]
+  "pages": [
+    "hosted-page",
+    "customization",
+    "telegram-notifications",
+    "disputes-and-support"
+  ]
 }
