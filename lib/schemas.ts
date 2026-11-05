@@ -210,3 +210,98 @@ export const teamListSchema = {
     invites: { type: "array" },
   },
 } as const;
+
+/* ------------------------- checkout sessions ------------------------- */
+
+export const checkoutSessionCreatedSchema = {
+  type: "object",
+  required: [
+    "sessionId",
+    "clientSecret",
+    "orderId",
+    "expiresAt",
+    "orderExpiresAt",
+    "hostedUrl",
+    "embedUrl",
+    "order",
+  ],
+  properties: {
+    sessionId: { type: "string" },
+    clientSecret: { type: "string" },
+    orderId: { type: "string" },
+    expiresAt: { type: "string", format: "date-time" },
+    orderExpiresAt: { type: "string", format: "date-time" },
+    hostedUrl: { type: "string", format: "uri" },
+    embedUrl: { type: "string", format: "uri" },
+    order: {
+      type: "object",
+      required: ["amount", "amountMinor", "currency", "description"],
+      properties: {
+        amount: { type: "number" },
+        amountMinor: { type: "integer" },
+        currency: { type: "string" },
+        description: { type: "string" },
+      },
+    },
+  },
+} as const;
+
+export const checkoutSessionSchema = {
+  type: "object",
+  required: [
+    "sessionId",
+    "orderId",
+    "status",
+    "amount",
+    "amountMinor",
+    "currency",
+    "description",
+    "expiresAt",
+    "shortReference",
+    "project",
+    "bankAccounts",
+    "payment",
+  ],
+  properties: {
+    sessionId: { type: "string" },
+    orderId: { type: "string" },
+    status: { type: "string" },
+    amount: { type: "number" },
+    amountMinor: { type: "integer" },
+    currency: { type: "string" },
+    description: { type: "string" },
+    items: { type: ["array", "null"] },
+    expiresAt: { type: "string", format: "date-time" },
+    shortReference: { type: "string" },
+    project: { type: "object" },
+    bankAccounts: { type: "array" },
+    payment: { type: ["object", "null"] },
+  },
+} as const;
+
+export const checkoutReceiptAcceptedSchema = {
+  type: "object",
+  required: ["paymentId", "status"],
+  properties: {
+    paymentId: { type: "string" },
+    status: { type: "string" },
+  },
+} as const;
+
+export const checkoutStatusSchema = {
+  type: "object",
+  required: ["sessionId", "orderId", "orderStatus", "paymentId", "status", "stage", "code"],
+  properties: {
+    sessionId: { type: "string" },
+    orderId: { type: "string" },
+    orderStatus: { type: "string" },
+    paymentId: { type: ["string", "null"] },
+    status: { type: ["string", "null"] },
+    stage: { type: ["string", "null"] },
+    code: { type: ["string", "null"] },
+    reason: { type: ["string", "null"] },
+    adminNote: { type: ["string", "null"] },
+    approvedAt: { type: ["string", "null"] },
+    rejectedAt: { type: ["string", "null"] },
+  },
+} as const;

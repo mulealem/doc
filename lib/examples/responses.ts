@@ -188,3 +188,80 @@ export const errorMissingBearer = {
 export const errorBankAlreadyEnabled = {
   error: "This bank is already enabled for this project",
 } as const;
+
+/* ------------------------- checkout sessions ------------------------- */
+
+export const checkoutSessionCreated = {
+  sessionId: "cs_9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+  clientSecret: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  expiresAt: "2026-08-13T15:30:00.000Z",
+  orderExpiresAt: "2026-08-13T15:30:00.000Z",
+  hostedUrl: "https://checkout.example.com/pay/ord_3x4mpl3t3st0rd3r1d2",
+  embedUrl: "https://checkout.example.com/embed/ord_3x4mpl3t3st0rd3r1d2",
+  order: {
+    amount: 250,
+    amountMinor: 25000,
+    currency: "ETB",
+    description: "Order #1042",
+  },
+} as const;
+
+export const checkoutSession = {
+  sessionId: "cs_9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  status: "PENDING",
+  amount: 250,
+  amountMinor: 25000,
+  currency: "ETB",
+  description: "Order #1042",
+  items: [{ name: "Widget", qty: 1, price: 250 }],
+  expiresAt: "2026-08-13T15:30:00.000Z",
+  shortReference: "PY-482913-KJ3",
+  project: { name: "Acme Store", theme: "violet" },
+  bankAccounts: [
+    {
+      id: "bnk_3x4mpl3t3stb4nk1d2",
+      type: "TELEBIRR",
+      accountName: "Acme Store",
+      accountNumber: "0912345678",
+      phoneNumber: null,
+      receiptTypes: ["IMAGE", "SMS_TEXT", "TRANSACTION_NUMBER"],
+      requiresPhoneNumber: false,
+    },
+  ],
+  payment: null,
+} as const;
+
+export const checkoutReceiptAccepted = {
+  paymentId: "pay_7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  status: "PENDING",
+} as const;
+
+export const checkoutStatusVerifying = {
+  sessionId: "cs_9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  orderStatus: "PENDING",
+  paymentId: "pay_7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  status: "PENDING",
+  stage: "VERIFYING",
+  code: "pending_review",
+  reason: null,
+  adminNote: null,
+  approvedAt: null,
+  rejectedAt: null,
+} as const;
+
+export const checkoutStatusApproved = {
+  sessionId: "cs_9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  orderStatus: "COMPLETED",
+  paymentId: "pay_7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  status: "APPROVED",
+  stage: null,
+  code: "approved",
+  reason: null,
+  adminNote: null,
+  approvedAt: "2026-08-13T15:04:12.000Z",
+  rejectedAt: null,
+} as const;

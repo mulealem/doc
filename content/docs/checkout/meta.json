@@ -2,6 +2,7 @@
   "title": "Hosted Checkout",
   "pages": [
     "hosted-page",
+    "embedding",
     "customization",
     "telegram-notifications",
     "disputes-and-support"

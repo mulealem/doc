@@ -1,0 +1,88 @@
+---
+title: Get status
+description: Poll the verification state of a checkout session.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Get session status
+
+<Endpoint method="GET" path="/api/checkout/v1/session/status" auth="Authorization: Bearer" />
+
+Poll this after [submitting a receipt](/api-reference/checkout/submit-receipt). It returns the payment verdict plus the reason a `PENDING` payment is not finished yet.
+
+The same status is what powers payo's hosted pending screen, so the semantics are identical.
+
+## Headers
+
+<Params>
+  <Param name="Authorization" type="string" required>
+    `Bearer <clientSecret>`
+  </Param>
+</Params>
+
+## Example
+
+```bash
+curl https://dashboard.example.com/api/checkout/v1/session/status \
+  -H "authorization: Bearer $CLIENT_SECRET"
+```
+
+## Responses
+
+<Response status="200" body={{
+  sessionId: "cs_9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  orderStatus: "PENDING",
+  paymentId: "pay_7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  status: "PENDING",
+  stage: "VERIFYING",
+  code: "pending_review",
+  reason: null,
+  adminNote: null,
+  approvedAt: null,
+  rejectedAt: null
+}} description="Verification in progress. Keep polling every 2–5 seconds." />
+
+<Response status="200" body={{
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  orderStatus: "COMPLETED",
+  paymentId: "pay_7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  status: "APPROVED",
+  stage: null,
+  code: "approved",
+  reason: null,
+  adminNote: null,
+  approvedAt: "2026-08-13T15:04:12.000Z",
+  rejectedAt: null
+}} description="Terminal: stop polling and fulfil the order." />
+
+<Response status="200" body={{
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  orderStatus: "FAILED",
+  paymentId: "pay_7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  status: "REJECTED",
+  stage: null,
+  code: "amount_mismatch",
+  reason: "Receipt amount 90.00 ETB does not match order amount 250.00 ETB",
+  adminNote: "Please pay the full amount",
+  approvedAt: null,
+  rejectedAt: "2026-08-13T15:09:40.000Z"
+}} />
+
+<Response status="401" body={{ error: "Invalid or missing checkout session token" }} description="Malformed, expired, or missing bearer token." />
+<Response status="404" body={{ error: "Order not found" }} description="The order no longer exists." />
+
+## Fields
+
+| Field | Meaning |
+|---|---|
+| `status` | `PENDING`, `APPROVED`, or `REJECTED`. `null` before a receipt is submitted. |
+| `stage` | Only while `PENDING`: `VERIFYING` (worker still running), `NEEDS_REVIEW` (a rule denied auto-approval or the verifier failed — a human must look), `FINALIZING` (approved, commit in flight). |
+| `code` | Stable machine code — `approved`, `amount_mismatch`, `missing_reference`, `duplicate_reference`, `stale_receipt`, `replay_receipt`, `provider_mismatch`, `receiver_mismatch`, `gate_rejected`, `pending_review`, `verification_failed`, `not_pending`. |
+| `reason` | Human-readable detail for `NEEDS_REVIEW`/`REJECTED`. |
+| `adminNote` | Note a human reviewer left, when rejected. |
+
+<Callout type="warn">
+  Poll every 2–5 seconds and stop as soon as `status` is no longer `PENDING`. Fulfil the order from the `payment.approved` webhook — the poll is a UI convenience, not the source of truth.
+</Callout>

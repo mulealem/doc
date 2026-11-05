@@ -1,0 +1,4 @@
+{
+  "title": "Checkout",
+  "pages": ["create-session", "get-session", "submit-receipt", "get-status"]
+}

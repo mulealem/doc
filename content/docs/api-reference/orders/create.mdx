@@ -24,7 +24,7 @@ Creates an order for a payment. Returns a hosted `paymentUrl` that you redirect 
     ISO 4217 currency code. Examples: `ETB`, `USD`, `EUR`. Only currencies enabled on your project are accepted.
   </Param>
   <Param name="items" type="array">
-    Optional line items for the receipt. Each item: `{ name, quantity, amount, amountMinor }`.
+    Optional line items for the receipt. Each item: `{ name, qty, price }`.
   </Param>
   <Param name="metadata" type="object">
     Free-form key/value pairs. Echoed back in webhooks and order lookups. Useful for storing your own internal IDs.
@@ -120,5 +120,5 @@ Creates an order for a payment. Returns a hosted `paymentUrl` that you redirect 
 <Response status="429" body={{ error: "Too many order creations. Try again shortly." }} description="Rate limited. Honor the Retry-After header." />
 
 <Callout type="info">
-  Redirect the customer to `paymentUrl` instead of embedding it in an iframe. The checkout page is hosted on a separate origin (`checkout.example.com`) by design — it keeps your app out of PCI scope and gives you free access to Payo's automatic UI updates.
+  Three ways to get paid: redirect the customer to `paymentUrl` (simplest), [embed the checkout](/checkout/embedding) in your page, or build your own UI on the [headless checkout API](/api-reference/checkout/create-session). Never hand-roll an iframe around `/pay/{orderId}` — use `/embed/{orderId}`, which is the only page designed to be framed and reports results via `postMessage`.
 </Callout>

@@ -1,0 +1,65 @@
+---
+title: Submit a receipt
+description: Attach the customer's payment proof to a checkout session.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Submit a receipt
+
+<Endpoint method="POST" path="/api/checkout/v1/session/receipt" auth="Authorization: Bearer" />
+
+Uploads the customer's proof of payment for the session's order. This runs the exact pipeline the hosted checkout uses: the receipt is stored, a `Payment` row is created, and the verifier job is enqueued. The response is immediate — verification happens asynchronously, so poll [Get status](/api-reference/checkout/get-status) afterwards.
+
+The body is `multipart/form-data`.
+
+## Form fields
+
+<Params>
+  <Param name="receiptType" type="string" required>
+    One of the account's `receiptTypes`, from [Get session](/api-reference/checkout/get-session).
+  </Param>
+  <Param name="bankAccountId" type="string" required>
+    The bank account the customer paid into.
+  </Param>
+  <Param name="receipt" type="file">
+    Required when `receiptType` is `IMAGE`. Max 10 MB; image MIME type.
+  </Param>
+  <Param name="smsText" type="string">
+    Required when `receiptType` is `SMS_TEXT`. Minimum 10 characters.
+  </Param>
+  <Param name="transactionNumber" type="string">
+    Required when `receiptType` is `TRANSACTION_NUMBER`. Minimum 4 characters. A receipt URL is accepted for banks that support it.
+  </Param>
+  <Param name="phoneNumber" type="string">
+    `2519XXXXXXXX`. Required for CBE Birr accounts.
+  </Param>
+</Params>
+
+## Example
+
+```bash
+curl -X POST https://dashboard.example.com/api/checkout/v1/session/receipt \
+  -H "authorization: Bearer $CLIENT_SECRET" \
+  -F receiptType=IMAGE \
+  -F bankAccountId=bnk_… \
+  -F receipt=@receipt.jpg
+```
+
+## Responses
+
+<Response status="201" body={{
+  paymentId: "pay_7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  status: "PENDING"
+}} />
+
+<Response status="400" body={{ error: "Unsupported receipt type for this bank" }} description="receiptType is not one of the account's accepted types, or a required field is missing." />
+<Response status="401" body={{ error: "Invalid or missing checkout session token" }} description="Malformed, expired, or missing bearer token." />
+<Response status="404" body={{ error: "Order not found" }} description="The order no longer exists." />
+<Response status="409" body={{ error: "Receipt already submitted" }} description="This order already has a payment. A session accepts exactly one receipt." />
+<Response status="410" body={{ error: "Order expired" }} description="expiresAt has passed; the order has been marked EXPIRED." />
+<Response status="429" body={{ error: "Too many uploads. Try again shortly." }} description="Rate limited (20/min per IP, 10/min per session). Honor Retry-After." />
+
+<Callout type="warn">
+  Do not retry a `409` with a different receipt. One payment per order is the rule everywhere in payo; a rejected receipt is resolved through a dispute, not a re-upload from the API.
+</Callout>

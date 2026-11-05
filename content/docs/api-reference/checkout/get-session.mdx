@@ -1,0 +1,78 @@
+---
+title: Get session
+description: Read the order, bank accounts, and receipt capabilities for a checkout session.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Get the session
+
+<Endpoint method="GET" path="/api/checkout/v1/session" auth="Authorization: Bearer" />
+
+Returns everything your own checkout UI needs to render payment instructions: the amount, the expiry, the project's bank accounts, and — per account — the receipt types it accepts. Call it once when your checkout page mounts.
+
+This endpoint is served from `dashboard.example.com` and sends permissive CORS headers, so your customer's browser can call it directly. Authenticate with the `clientSecret` from [Create a checkout session](/api-reference/checkout/create-session) — never with your `x-api-key`.
+
+## Headers
+
+<Params>
+  <Param name="Authorization" type="string" required>
+    `Bearer <clientSecret>`. The secret is bound to one order; using it against a different order returns `404`.
+  </Param>
+</Params>
+
+## Example
+
+```bash
+curl https://dashboard.example.com/api/checkout/v1/session \
+  -H "authorization: Bearer $CLIENT_SECRET"
+```
+
+## Responses
+
+<Response status="200" body={{
+  sessionId: "cs_9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  status: "PENDING",
+  amount: 250,
+  amountMinor: 25000,
+  currency: "ETB",
+  description: "Order #1042",
+  items: [{ name: "Widget", qty: 1, price: 250 }],
+  expiresAt: "2026-08-13T15:30:00.000Z",
+  shortReference: "PY-482913-KJ3",
+  project: { name: "Acme Store", theme: "violet" },
+  bankAccounts: [
+    {
+      id: "bnk_…",
+      type: "TELEBIRR",
+      accountName: "Acme Store",
+      accountNumber: "0912345678",
+      phoneNumber: null,
+      receiptTypes: ["IMAGE", "SMS_TEXT", "TRANSACTION_NUMBER"],
+      requiresPhoneNumber: false
+    }
+  ],
+  payment: null
+}} />
+
+<Response status="401" body={{ error: "Invalid or missing checkout session token" }} description="Malformed, expired, or missing bearer token." />
+<Response status="404" body={{ error: "Order not found" }} description="The order no longer exists." />
+
+## Rendering the payment instructions
+
+`shortReference` (e.g. `PY-482913-KJ3`) is the value the customer must put in the transfer remark — it is what the verifier matches the receipt against. Display it next to the account number and make both copyable.
+
+`receiptTypes` tells you which proof to collect for each bank:
+
+| Value | Meaning |
+|---|---|
+| `IMAGE` | Photo/screenshot of the receipt, uploaded as multipart |
+| `SMS_TEXT` | Pasted SMS text from the bank |
+| `TRANSACTION_NUMBER` | The bank's transaction reference / receipt URL |
+
+When `requiresPhoneNumber` is `true` (CBE Birr), collect `2519XXXXXXXX` and send it with the receipt.
+
+<Callout type="info">
+  `status` is `PENDING` while the order is payable, and `EXPIRED` once `expiresAt` has passed. A non-`PENDING` status means the order can no longer accept a receipt — stop rendering the form.
+</Callout>

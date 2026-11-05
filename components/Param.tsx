@@ -7,7 +7,8 @@ export interface ParamProps {
   default?: string;
   min?: string | number;
   max?: string | number;
-  enum?: string[];
+  /** Array or comma-separated string — both shapes exist in the content. */
+  enum?: string[] | string;
   children: ReactNode;
 }
 
@@ -21,6 +22,17 @@ export function Param({
   enum: enumValues,
   children,
 }: ParamProps) {
+  // Normalise `enum="A, B, C"` and `enum={["A","B"]}` to an array. A raw
+  // string used to reach `.join()` and crash the static export.
+  const enumList = Array.isArray(enumValues)
+    ? enumValues
+    : typeof enumValues === "string"
+      ? enumValues
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
+
   return (
     <div
       data-param-name={name}
@@ -96,7 +108,7 @@ export function Param({
             {max !== undefined ? `max: ${max}` : ""}
           </span>
         ) : null}
-        {enumValues && enumValues.length > 0 ? (
+        {enumList.length > 0 ? (
           <span
             style={{
               fontSize: "0.7rem",
@@ -106,7 +118,7 @@ export function Param({
               borderRadius: 3,
             }}
           >
-            enum: {enumValues.join(" · ")}
+            enum: {enumList.join(" · ")}
           </span>
         ) : null}
       </div>

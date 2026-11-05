@@ -21,8 +21,7 @@ customer clicks "Pay" on your site
   → customer returns to hosted page
   → customer uploads a screenshot of the receipt
   → hosted page polls for verification
-  → on success: redirect to your successUrl
-  → on failure: redirect to your cancelUrl
+  → on success: returns the customer to your ?returnUrl=
 ```
 
 ## URL
@@ -56,15 +55,25 @@ You can append optional query parameters to the `paymentUrl`:
 | Param | Purpose |
 |---|---|
 | `?lang=am` | Force UI language (auto-detected from browser by default) |
-| `?theme=dark` | Force dark mode regardless of system preference |
+| `?returnUrl=https://…` | Absolute http/https URL shown as a "Return to merchant" button; the customer is sent there automatically after approval |
 
-## Success and cancel URLs
+## Returning to your site
 
-The hosted page does not currently support merchant-return URLs (planned for v1.5). Until then, detect success by:
+Pass `?returnUrl=` with an absolute http/https URL. The hosted page renders a **Return to merchant** button and, once the payment is approved, sends the customer back after a short confirmation beat.
 
-- Receiving a `payment.approved` webhook, or
-- Polling `GET /api/v1/orders/{orderId}` and checking `status === "PAID"`.
+The return URL is a convenience, not a reliable event: the customer may close the tab first. Treat fulfilment as webhook-driven:
+
+- Receive the `payment.approved` webhook ([Webhooks](/webhooks/overview)), or
+- Poll `GET /api/v1/orders/{orderId}` and check `status === "COMPLETED"`.
 
 <Callout type="warn">
-  Don't redirect the customer back to your site based on the in-page polling result. The customer may close the tab before the redirect fires, and you'll miss the state change. Always rely on the webhook or the API.
+  Never mark an order paid because the customer came back to your success page. Verify with the webhook or the API — otherwise anyone can "complete" an order by editing the URL.
 </Callout>
+
+## Other checkout surfaces
+
+| You want | Use |
+|---|---|
+| Customer leaves your site | This page — redirect to `paymentUrl` |
+| Customer stays on your site, payo's UI | [Embedding](/checkout/embedding) — `/embed/{orderId}` + `payo-embed.js` |
+| Your own UI, payo's backend | [Headless checkout API](/api-reference/checkout/create-session) — `/api/checkout/v1/*` |

@@ -1,0 +1,105 @@
+---
+title: Embedding
+description: Drop payo's payment UI into your own page with one script tag.
+---
+
+# Embed the checkout
+
+The embed keeps the customer on your site while payo renders the payment form in an iframe. It is the middle ground between a full redirect and a fully custom UI:
+
+- **Hosted redirect** — zero UI work, customer leaves your site.
+- **Embed** — zero UI work, customer stays on your site. The form, localization, and receipt handling are ours.
+- **Headless** — your own UI, payo's API. See [Create a checkout session](/api-reference/checkout/create-session).
+
+The iframe is served from `checkout.example.com`, so payment details never touch your page's JavaScript.
+
+## 1. Create an order
+
+```bash
+curl -X POST https://dashboard.example.com/api/v1/orders \
+  -H "x-api-key: $PYGATE_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{ "amount": 250, "description": "Order #1042" }'
+```
+
+Or create the order and a session in one call with `POST /api/v1/checkout/sessions` — the embed itself only needs `orderId`.
+
+## 2. Load the script and mount
+
+```html
+<script src="https://checkout.example.com/payo-embed.js" async></script>
+
+<script>
+  Payo.mount({
+    orderId: "ord_3x4mpl3t3st0rd3r1d2",
+    mode: "modal", // or "inline"
+    container: "#payo-checkout", // required for inline
+    onReady: (e) => console.log("checkout ready", e),
+    onApproved: (e) => console.log("payment approved", e.orderId),
+    onRejected: (e) => console.warn("rejected:", e.code, e.reason),
+    onExpired: () => console.warn("order expired"),
+    onClose: () => console.log("checkout closed"),
+  });
+</script>
+```
+
+`mode: "modal"` opens an overlay with a close button (ESC and backdrop also close it). `mode: "inline"` appends the iframe to your container and auto-sizes it from the `payo:height` events.
+
+If the script is still loading, `Payo.mount` calls made before it executes are queued — load it with `async` and call it inline.
+
+## Events
+
+All events arrive as `postMessage` payloads shaped `{ source: "payo", event, orderId, … }`. The bridge only accepts messages from the checkout origin and from the iframe it created; every outgoing message is addressed to your origin (taken from `window.location.origin`), never `"*"`.
+
+| Event | Fires when | Extra fields |
+|---|---|---|
+| `payo:ready` | The form is rendered | `amount`, `currency`, `projectName` |
+| `payo:submitted` | A receipt was uploaded | `paymentId` |
+| `payo:approved` | Verification approved the payment | `paymentId`, `adminNote` |
+| `payo:rejected` | Verification rejected it | `paymentId`, `code`, `reason`, `adminNote` |
+| `payo:expired` | The order expired before payment | — |
+| `payo:paid` | Opened after the order was already paid | `status` |
+| `payo:height` | The iframe content changed size | `height` (px) |
+| `payo:close` | Host asked to close (inline script only) | — |
+
+In modal mode the overlay closes itself ~1.4 s after `payo:approved`. Set `autoClose: false` to keep it open and handle closing yourself.
+
+## Raw iframe (no script)
+
+If you'd rather not load any JavaScript from us:
+
+```html
+<iframe
+  src="https://checkout.example.com/embed/ord_3x4mpl3t3st0rd3r1d2?origin=https://shop.example.com"
+  style="width: 100%; height: 720px; border: 0"
+  title="Payo checkout"
+></iframe>
+```
+
+Then listen for messages yourself:
+
+```js
+window.addEventListener("message", (event) => {
+  if (event.origin !== "https://checkout.example.com") return;
+  if (event.data?.source !== "payo") return;
+  if (event.data.event === "payo:approved") fulfilOrder(event.data.orderId);
+});
+```
+
+The `origin` parameter is required for any events to be delivered — it is validated (http/https only) and used as the `postMessage` target.
+
+## Content Security Policy
+
+If your page sends a CSP, allow the checkout origin in `frame-src` (and `script-src` if you use `payo-embed.js`):
+
+```
+Content-Security-Policy:
+  script-src 'self' https://checkout.example.com;
+  frame-src  https://checkout.example.com;
+```
+
+## What the embed does not do
+
+- It does not support `?returnUrl=` navigation inside the frame in embedded mode — the host page decides what happens after `payo:approved`.
+- It cannot be themed beyond the project's logo and accent (same as the hosted page).
+- Disputes and support links open payo's pages inside the frame. If you need those flows in your own UI, use the headless API.

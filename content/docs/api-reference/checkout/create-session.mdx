@@ -1,0 +1,125 @@
+---
+title: Create a checkout session
+description: Mint an order-scoped client secret for embedded or headless checkout.
+---
+
+import { Endpoint, Params, Param, Response } from "@/components";
+
+# Create a checkout session
+
+<Endpoint method="POST" path="/api/v1/checkout/sessions" auth="x-api-key" />
+
+Creates a **checkout session** for an order and returns a `clientSecret`. The secret is a signed, order-scoped token your frontend uses against the customer-facing API — it is what replaces payo's hosted UI when you build your own.
+
+A session is only needed for the headless flow and for embedding. The classic hosted redirect (`paymentUrl` from [Create order](/api-reference/orders/create)) does not require one.
+
+## Request body
+
+Pass **either** `orderId` (to attach a session to an existing order) **or** the order fields (to create the order and the session in one call).
+
+<Params>
+  <Param name="orderId" type="string">
+    Existing order to open a session for. Must belong to the project the API key belongs to. Ignored when order fields are supplied.
+  </Param>
+  <Param name="amount" type="number">
+    Order amount in major units. Same rules as [Create order](/api-reference/orders/create).
+  </Param>
+  <Param name="description" type="string">
+    Human-readable description, shown in your UI.
+  </Param>
+  <Param name="currency" type="string" default="ETB">
+    ISO 4217 currency code.
+  </Param>
+  <Param name="items" type="array">
+    Optional line items. Each item: `{ name, qty, price }`.
+  </Param>
+  <Param name="metadata" type="object">
+    Free-form key/value pairs, echoed in webhooks and lookups.
+  </Param>
+  <Param name="expiresInSeconds" type="number" default="600" min="60" max="86400">
+    Order lifetime. The session never outlives the order.
+  </Param>
+</Params>
+
+## Example
+
+<Tabs items={["cURL", "Node", "Python", "PHP", "Go"]}>
+  <Tab value="cURL">
+    ```bash
+    curl -X POST https://dashboard.example.com/api/v1/checkout/sessions \
+      -H "x-api-key: pgk_test_4b1c2d3e4f5g6h7i" \
+      -H "content-type: application/json" \
+      -d '{
+        "amount": 250,
+        "description": "Order #1042",
+        "currency": "ETB"
+      }'
+    ```
+  </Tab>
+  <Tab value="Node">
+    ```ts
+    const session = await createCheckoutSession({
+      apiKey: process.env.PYGATE_API_KEY,
+      amount: 250,
+      description: "Order #1042",
+    });
+
+    // Ship `clientSecret` to your frontend — never the API key.
+    ```
+  </Tab>
+  <Tab value="Python">
+    ```python
+    session = client.checkout_sessions.create(
+        amount=250,
+        description="Order #1042",
+        currency="ETB",
+    )
+    ```
+  </Tab>
+  <Tab value="PHP">
+    ```php
+    $session = $client->checkoutSessions->create([
+        "amount" => 250,
+        "description" => "Order #1042",
+    ]);
+    ```
+  </Tab>
+  <Tab value="Go">
+    ```go
+    session, err := client.CheckoutSessions.Create(ctx, pygate.CheckoutSessionParams{
+        Amount:      250,
+        Description: "Order #1042",
+    })
+    ```
+  </Tab>
+</Tabs>
+
+## Responses
+
+<Response status="201" body={{
+  sessionId: "cs_9f8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+  clientSecret: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9…",
+  orderId: "ord_3x4mpl3t3st0rd3r1d2",
+  expiresAt: "2026-08-13T15:30:00.000Z",
+  orderExpiresAt: "2026-08-13T15:30:00.000Z",
+  hostedUrl: "https://checkout.example.com/pay/ord_3x4mpl3t3st0rd3r1d2",
+  embedUrl: "https://checkout.example.com/embed/ord_3x4mpl3t3st0rd3r1d2",
+  order: {
+    amount: 250,
+    amountMinor: 25000,
+    currency: "ETB",
+    description: "Order #1042"
+  }
+}} />
+
+<Response status="400" body={{ error: "No bank account is enabled for this project" }} description="The project has no bank accounts configured." />
+<Response status="401" body={{ error: "Missing x-api-key header" }} description="The x-api-key header is absent." />
+<Response status="401" body={{ error: "Invalid API key" }} description="The x-api-key doesn't match any project." />
+<Response status="404" body={{ error: "Order not found" }} description="orderId does not exist or belongs to another project." />
+<Response status="409" body={{ error: "Order is not payable" }} description="The order is already completed, failed, or expired." />
+<Response status="410" body={{ error: "Order expired" }} description="The order's expiresAt has passed." />
+<Response status="429" body={{ error: "Too many requests. Try again shortly." }} description="Rate limited (30/min per project). Honor Retry-After." />
+
+<Callout type="warn">
+  Treat `clientSecret` as a capability for one order, not a secret: it is designed to be handed to the customer's browser. Keep the `x-api-key` server-side — it can create orders for every customer.
+</Callout>
